@@ -1334,33 +1334,49 @@ namespace aabb
 			int n3 = nodes[right].left;
 			int n4 = nodes[right].right;
 
-			AABB u12 = AABB.Union(nodes[n1].aabb, nodes[n2].aabb);
-			AABB u13 = AABB.Union(nodes[n1].aabb, nodes[n3].aabb);
-			AABB u14 = AABB.Union(nodes[n1].aabb, nodes[n4].aabb);
-			AABB u23 = AABB.Union(nodes[n2].aabb, nodes[n3].aabb);
-			AABB u24 = AABB.Union(nodes[n2].aabb, nodes[n4].aabb);
-			AABB u34 = AABB.Union(nodes[n3].aabb, nodes[n4].aabb);
+			AABB u12 = AABB.Union(nodes[n1].aabb, nodes[n2].aabb); double a12 = u12.Area();
+			AABB u13 = AABB.Union(nodes[n1].aabb, nodes[n3].aabb); double a13 = u13.Area();
+			AABB u14 = AABB.Union(nodes[n1].aabb, nodes[n4].aabb); double a14 = u14.Area();
+			AABB u23 = AABB.Union(nodes[n2].aabb, nodes[n3].aabb); double a23 = u23.Area();
+			AABB u24 = AABB.Union(nodes[n2].aabb, nodes[n4].aabb); double a24 = u24.Area();
+			AABB u34 = AABB.Union(nodes[n3].aabb, nodes[n4].aabb); double a34 = u34.Area();
 
-			double a1234 = u12.Area() + u34.Area();
-			double a1324 = u13.Area() + u24.Area();
-			double a1423 = u14.Area() + u23.Area();
 			double x1234 = AABB.Intersect(u12, u34).Area();
 			double x1324 = AABB.Intersect(u13, u24).Area();
 			double x1423 = AABB.Intersect(u14, u23).Area();
-			// double r1234 = Math.Max(a12, a34) / Math.Min(a12, a34);
-			// double r1324 = Math.Max(a13, a24) / Math.Min(a13, a24);
-			// double r1423 = Math.Max(a14, a23) / Math.Min(a14, a23);
+			double xMin = Math.Min(Math.Min(x1234, x1324), x1423);
+			bool b1234 = (xMin == x1234);
+			bool b1324 = (xMin == x1324);
+			bool b1423 = (xMin == x1423);
 
-			if (x1234 == 0) {
-				// ...
-			} else if (x1324 == 0) {
-				swap(n2, n3);
-			} else if (x1423 == 0) {
-				swap(n2, n4);
-			} else {
+			if (Convert.ToInt32(b1234) + Convert.ToInt32(b1324) + Convert.ToInt32(b1423) > 1)
+			{
+				double a1234 = b1234? u12.Area() + u34.Area(): double.MaxValue;
+				double a1324 = b1324? u13.Area() + u24.Area(): double.MaxValue;
+				double a1423 = b1423? u14.Area() + u23.Area(): double.MaxValue;
 				double aMin = Math.Min(Math.Min(a1234, a1324), a1423);
-				if (aMin == a1324) swap(n2, n3);
-				if (aMin == a1423) swap(n2, n4);
+				b1234 = (aMin == a1234);
+				b1324 = (aMin == a1324);
+				b1423 = (aMin == a1423);
+
+				if (Convert.ToInt32(b1234) + Convert.ToInt32(b1324) + Convert.ToInt32(b1423) > 1)
+				{
+					double r1234 = b1234? Math.Max(a12, a34) / Math.Min(a12, a34): double.MaxValue;
+					double r1324 = b1324? Math.Max(a13, a24) / Math.Min(a13, a24): double.MaxValue;
+					double r1423 = b1423? Math.Max(a14, a23) / Math.Min(a14, a23): double.MaxValue;
+					double rMin = Math.Min(Math.Min(r1234, r1324), r1423);
+					b1234 = (rMin == r1234);
+					b1324 = (rMin == r1324);
+					b1423 = (rMin == r1423);
+				} 
+			}
+			
+			if (b1234) {
+				// pass
+			} else if (b1324) {
+				swap(n2, n3);
+			} else if (b1423) {
+				swap(n2, n4);
 			}
 			
 			update(left);
@@ -1883,7 +1899,7 @@ namespace aabb
             List<double> boxSize = new List<double>() {baseLength, baseLength};
 
             // Initialise the random number generator.
-            Random random = new Random(-1);
+            Random random = new Random();
 
             // Initialise the AABB trees.
             aabb.Tree treeSmall = new aabb.Tree(2, maxDisp, periodicity, boxSize, nSmall);
