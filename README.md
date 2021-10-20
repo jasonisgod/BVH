@@ -21,14 +21,7 @@ Because of their speed and flexibility, AABB trees are also well suited
 to overlap detection in physics applications, such as molecular simulation.
 They are particularly helpful for systems where there is a large size disparity
 between particle species, or whenever the particle density is extremely
-inhomogeneous. In such situations, traditional neighbour finding tools, such
-as [cell lists](https://en.wikipedia.org/wiki/Cell_lists), can become extremely
-inefficient (both in terms of memory footprint, and search speed). A good
-overview of the pros and cons of various neighbour finding algorithms
-can be found [here](http://hoomd-blue.readthedocs.io/en/stable/nlist.html).
-(Note that this only discusses the cost of _querying_ different data
-structures, not the additional overhead of building them, or maintaining
-them as objects move around.)
+inhomogeneous.
 
 ![Alt text](img/test.png?raw=true "Title")
 
@@ -54,16 +47,10 @@ Options
 - Swap(1, 4)
 
 ## TODO
-- one class one file
-- tree optimize 
-	- (L3, L4, R1, R2, 13, 14)
-	- list.Where(...).OrderBy(...).First();
 - node-aabb-polygon
 	- object <-> nodes pointer mapping
 	- create aabb by polygon
 - closest point search
 	- dolfin BoundingBoxTree
-- improve main run
 - unity GUI
-	- mouse event
 	- insert/find/update/remove
