@@ -8,13 +8,13 @@ namespace aabb
 {
 	/*! \brief The axis-aligned bounding box object.
 
-	    Axis-aligned bounding boxes (AABBs) store information for the minimum
-	    orthorhombic bounding-box for an object. Support is provided for
-	    dimensions >= 2. (In 2D the bounding box is either a rectangle,
-	    in 3D it is a rectangular prism.)
+		Axis-aligned bounding boxes (AABBs) store information for the minimum
+		orthorhombic bounding-box for an object. Support is provided for
+		dimensions >= 2. (In 2D the bounding box is either a rectangle,
+		in 3D it is a rectangular prism.)
 
-	    Class member functions provide functionality for merging AABB objects
-	    and testing overlap with other AABBs.
+		Class member functions provide functionality for merging AABB objects
+		and testing overlap with other AABBs.
 	 */
 	public class AABB
 	{
@@ -39,7 +39,7 @@ namespace aabb
 
 		//! Constructor.
 		/*! \param dimension
-		        The dimensionality of the system.
+				The dimensionality of the system.
 		 */
 		public AABB(int dimension)
 		{
@@ -50,10 +50,10 @@ namespace aabb
 
 		//! Constructor.
 		/*! \param lowerBound_
-		        The lower bound in each dimension.
+				The lower bound in each dimension.
 
-		    \param upperBound_
-		        The upper bound in each dimension.
+			\param upperBound_
+				The upper bound in each dimension.
 		 */
 		public AABB(List<double> lowerBound_, List<double> upperBound_)
 		{
@@ -144,10 +144,10 @@ namespace aabb
 
 		//! Union two AABBs into this one.
 		/*! \param aabb1
-		        A reference to the first AABB.
+				A reference to the first AABB.
 
-		    \param aabb2
-		        A reference to the second AABB.
+			\param aabb2
+				A reference to the second AABB.
 		 */
 		public static AABB Union(AABB aabb1, AABB aabb2)
 		{
@@ -193,10 +193,10 @@ namespace aabb
 
 		//! Test whether the AABB is contained within this one.
 		/*! \param aabb
-		        A reference to the AABB.
+				A reference to the AABB.
 
-		    \return
-		        Whether the AABB is fully contained.
+			\return
+				Whether the AABB is fully contained.
 		 */
 		public bool contains(AABB aabb)
 		{
@@ -219,13 +219,13 @@ namespace aabb
 
 		//! Test whether the AABB overlaps this one.
 		/*! \param aabb
-		        A reference to the AABB.
+				A reference to the AABB.
 
-		    \param touchIsOverlap
-		        Does touching constitute an overlap?
+			\param touchIsOverlap
+				Does touching constitute an overlap?
 
-		    \return
-		        Whether the AABB overlaps.
+			\return
+				Whether the AABB overlaps.
 		 */
 		public bool overlaps(AABB aabb, bool touchIsOverlap)
 		{
@@ -261,7 +261,7 @@ namespace aabb
 
 		//! Compute the centre of the AABB.
 		/*! \returns
-		        The position vector of the AABB centre.
+				The position vector of the AABB centre.
 		 */
 		public List<double> computeCentre()
 		{
@@ -277,7 +277,7 @@ namespace aabb
 
 		//! Set the dimensionality of the AABB.
 		/*! \param dimension
-		        The dimensionality of the system.
+				The dimensionality of the system.
 		 */
 		public void setDimension(int dimension)
 		{

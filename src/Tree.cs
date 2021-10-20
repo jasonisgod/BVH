@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace aabb
 {
-    public class Tree
+	public class Tree
 	{
 		/// The index of the root node.
 		public int root;
@@ -53,17 +53,17 @@ namespace aabb
 
 		//! Constructor (non-periodic).
 		/*! \param dimension_
-		        The dimensionality of the system.
+				The dimensionality of the system.
 
-		    \param skinThickness_
-		        The skin thickness for fattened AABBs, as a fraction
-		        of the AABB base length.
+			\param skinThickness_
+				The skin thickness for fattened AABBs, as a fraction
+				of the AABB base length.
 
-		    \param nParticles
-		        The number of particles (for fixed particle number systems).
+			\param nParticles
+				The number of particles (for fixed particle number systems).
 
-		    \param touchIsOverlap
-		        Does touching count as overlapping in query operations?
+			\param touchIsOverlap
+				Does touching count as overlapping in query operations?
 		 */
 		public Tree(int dimension_ = 3, double skinThickness_ = 0.05, int nParticles = 16, bool touchIsOverlap_ = true)
 		{
@@ -101,23 +101,23 @@ namespace aabb
 
 		//! Constructor (custom periodicity).
 		/*! \param dimension_
-		        The dimensionality of the system.
+				The dimensionality of the system.
 
-		    \param skinThickness_
-		        The skin thickness for fattened AABBs, as a fraction
-		        of the AABB base length.
+			\param skinThickness_
+				The skin thickness for fattened AABBs, as a fraction
+				of the AABB base length.
 
-		    \param periodicity_
-		        Whether the system is periodic in each dimension.
+			\param periodicity_
+				Whether the system is periodic in each dimension.
 
-		    \param boxSize_
-		        The size of the simulation box in each dimension.
+			\param boxSize_
+				The size of the simulation box in each dimension.
 
-		    \param nParticles
-		        The number of particles (for fixed particle number systems).
+			\param nParticles
+				The number of particles (for fixed particle number systems).
 
-		    \param touchIsOverlap
-		        Does touching count as overlapping in query operations?
+			\param touchIsOverlap
+				Does touching count as overlapping in query operations?
 		 */
 		public Tree(int dimension_, double skinThickness_, List<bool> periodicity_, List<double> boxSize_, int nParticles = 16, bool touchIsOverlap_ = true)
 		{
@@ -174,7 +174,7 @@ namespace aabb
 
 		//! Set the periodicity of the simulation box.
 		/*! \param periodicity_
-		        Whether the system is periodic in each dimension.
+				Whether the system is periodic in each dimension.
 		 */
 		public void setPeriodicity(List<bool> periodicity_)
 		{
@@ -183,7 +183,7 @@ namespace aabb
 
 		//! Set the size of the simulation box.
 		/*! \param boxSize_
-		        The size of the simulation box in each dimension.
+				The size of the simulation box in each dimension.
 		 */
 		public void setBoxSize(List<double> boxSize_)
 		{
@@ -192,7 +192,7 @@ namespace aabb
 
 		//! Allocate a new node.
 		/*! \return
-		        The index of the allocated node.
+				The index of the allocated node.
 		 */
 		private int allocateNode()
 		{
@@ -233,7 +233,7 @@ namespace aabb
 
 		//! Free an existing node.
 		/*! \param node
-		        The index of the node to be freed.
+				The index of the node to be freed.
 		 */
 		private void freeNode(int node)
 		{
@@ -248,13 +248,13 @@ namespace aabb
 
 		//! Insert a particle into the tree (point particle).
 		/*! \param index
-		        The index of the particle.
+				The index of the particle.
 
-		    \param position
-		        The position vector of the particle.
+			\param position
+				The position vector of the particle.
 
-		    \param radius
-		        The radius of the particle.
+			\param radius
+				The radius of the particle.
 		 */
 		public void insertParticle(int particle, List<double> position, double radius)
 		{
@@ -305,13 +305,13 @@ namespace aabb
 
 		//! Insert a particle into the tree (arbitrary shape with bounding box).
 		/*! \param index
-		        The index of the particle.
+				The index of the particle.
 
-		    \param lowerBound
-		        The lower bound in each dimension.
+			\param lowerBound
+				The lower bound in each dimension.
 
-		    \param upperBound
-		        The upper bound in each dimension.
+			\param upperBound
+				The upper bound in each dimension.
 		 */
 		public void insertParticle(int particle, List<double> lowerBound, List<double> upperBound)
 		{
@@ -366,7 +366,7 @@ namespace aabb
 			nodes[node].particle = particle;
 		}
 
-        /// Return the number of particles in the tree.
+		/// Return the number of particles in the tree.
 		public int nParticles()
 		{
 			return (int)particleMap.Count;
@@ -374,7 +374,7 @@ namespace aabb
 
 		//! Remove a particle from the tree.
 		/*! \param particle
-		        The particle index (particleMap will be used to map the node).
+				The particle index (particleMap will be used to map the node).
 		 */
 		public void removeParticle(int particle)
 		{
@@ -384,8 +384,8 @@ namespace aabb
 				throw new System.ArgumentException("[ERROR]: Invalid particle index!");
 			}
 
-            // Extract the node index.
-            int node = particleMap[particle];
+			// Extract the node index.
+			int node = particleMap[particle];
 
 			// Erase the particle from the map.
 			particleMap.Remove(particle);
@@ -423,19 +423,19 @@ namespace aabb
 
 		//! Update the tree if a particle moves outside its fattened AABB.
 		/*! \param particle
-		        The particle index (particleMap will be used to map the node).
+				The particle index (particleMap will be used to map the node).
 
-		    \param position
-		        The position vector of the particle.
+			\param position
+				The position vector of the particle.
 
-		    \param radius
-		        The radius of the particle.
+			\param radius
+				The radius of the particle.
 
-		    \param alwaysReinsert
-		        Always reinsert the particle, even if it's within its old AABB (default:false)
+			\param alwaysReinsert
+				Always reinsert the particle, even if it's within its old AABB (default:false)
 
-		    \return
-		        Whether the particle was reinserted.
+			\return
+				Whether the particle was reinserted.
 		 */
 		public bool updateParticle(int particle, List<double> position, double radius, bool alwaysReinsert = false)
 		{
@@ -462,16 +462,16 @@ namespace aabb
 
 		//! Update the tree if a particle moves outside its fattened AABB.
 		/*! \param particle
-		        The particle index (particleMap will be used to map the node).
+				The particle index (particleMap will be used to map the node).
 
-		    \param lowerBound
-		        The lower bound in each dimension.
+			\param lowerBound
+				The lower bound in each dimension.
 
-		    \param upperBound
-		        The upper bound in each dimension.
+			\param upperBound
+				The upper bound in each dimension.
 
-		    \param alwaysReinsert
-		        Always reinsert the particle, even if it's within its old AABB (default: false)
+			\param alwaysReinsert
+				Always reinsert the particle, even if it's within its old AABB (default: false)
 		 */
 		public bool updateParticle(int particle, List<double> lowerBound, List<double> upperBound, bool alwaysReinsert = false)
 		{
@@ -487,8 +487,8 @@ namespace aabb
 				throw new System.ArgumentException("[ERROR]: Invalid particle index!");
 			}
 
-            // Extract the node index.
-            int node = particleMap[particle];
+			// Extract the node index.
+			int node = particleMap[particle];
 
 			// Erase the particle from the map.
 			particleMap.Remove(particle);
@@ -541,10 +541,10 @@ namespace aabb
 
 		//! Query the tree to find candidate interactions for a particle.
 		/*! \param particle
-		        The particle index.
+				The particle index.
 
-		    \return particles
-		        A vector of particle indices.
+			\return particles
+				A vector of particle indices.
 		 */
 		public List<int> query(int particle)
 		{
@@ -560,13 +560,13 @@ namespace aabb
 
 		//! Query the tree to find candidate interactions for an AABB.
 		/*! \param particle
-		        The particle index.
+				The particle index.
 
-		    \param aabb
-		        The AABB.
+			\param aabb
+				The AABB.
 
-		    \return particles
-		        A vector of particle indices.
+			\return particles
+				A vector of particle indices.
 		 */
 		public List<int> query(int particle, AABB aabb)
 		{
@@ -636,10 +636,10 @@ namespace aabb
 
 		//! Query the tree to find candidate interactions for an AABB.
 		/*! \param aabb
-		        The AABB.
+				The AABB.
 
-		    \return particles
-		        A vector of particle indices.
+			\return particles
+				A vector of particle indices.
 		 */
 		public List<int> query(AABB aabb)
 		{
@@ -655,17 +655,17 @@ namespace aabb
 
 		//! Get a particle AABB.
 		/*! \param particle
-		        The particle index.
+				The particle index.
 		 */
 		public AABB getAABB(int particle)
 		{
 			return nodes[particleMap[particle]].aabb;
 		}
-        
-        //! Insert a leaf into the tree.
-        /*! \param leaf
-                The index of the leaf node.
-         */
+		
+		//! Insert a leaf into the tree.
+		/*! \param leaf
+				The index of the leaf node.
+		 */
 		private void insertLeaf(int leaf)
 		{
 			if (root == -1)
@@ -790,11 +790,11 @@ namespace aabb
 				index = nodes[index].parent;
 			}
 			
-        }
+		}
 
 		//! Remove a leaf from the tree.
 		/*! \param leaf
-		        The index of the leaf node.
+				The index of the leaf node.
 		 */
 		private void removeLeaf(int leaf)
 		{
@@ -976,7 +976,7 @@ namespace aabb
 
 		//! Compute the height of the tree.
 		/*! \return
-		        The height of the entire tree.
+				The height of the entire tree.
 		 */
 		private int computeHeight()
 		{
@@ -985,10 +985,10 @@ namespace aabb
 
 		//! Compute the height of a sub-tree.
 		/*! \param node
-		        The index of the root node.
+				The index of the root node.
 
-		    \return
-		        The height of the sub-tree.
+			\return
+				The height of the sub-tree.
 		 */
 		private int computeHeight(int node)
 		{
@@ -1007,7 +1007,7 @@ namespace aabb
 
 		//! Get the height of the tree.
 		/*! \return
-		        The height of the binary tree.
+				The height of the binary tree.
 		 */
 		public int getHeight()
 		{
@@ -1020,7 +1020,7 @@ namespace aabb
 
 		//! Get the number of nodes in the tree.
 		/*! \return
-		        The number of nodes in the tree.
+				The number of nodes in the tree.
 		 */
 		public int getNodeCount()
 		{
@@ -1029,8 +1029,8 @@ namespace aabb
 
 		//! Compute the maximum balancance of the tree.
 		/*! \return
-		        The maximum difference between the height of two
-		        children of a node.
+				The maximum difference between the height of two
+				children of a node.
 		 */
 		public int computeMaximumBalance()
 		{
@@ -1053,8 +1053,8 @@ namespace aabb
 
 		//! Compute the surface area ratio of the tree.
 		/*! \return
-		        The ratio of the sum of the node surface area to the surface
-		        area of the root node.
+				The ratio of the sum of the node surface area to the surface
+				area of the root node.
 		 */
 		public double computeSurfaceAreaRatio()
 		{
@@ -1082,7 +1082,7 @@ namespace aabb
 		/// Validate the tree.
 		public void validate()
 		{
-            //#if ! NDEBUG
+			//#if ! NDEBUG
 			validateStructure(root);
 			validateMetrics(root);
 
@@ -1098,7 +1098,7 @@ namespace aabb
 
 			Debug.Assert(getHeight() == computeHeight());
 			Debug.Assert((nodeCount + freeCount) == nodeCapacity);
-            //#endif
+			//#endif
 		}
 
 		/// Rebuild an optimal tree.
@@ -1177,7 +1177,7 @@ namespace aabb
 
 		//! Assert that the sub-tree has a valid structure.
 		/*! \param node
-		        The index of the root node.
+				The index of the root node.
 		 */
 		private void validateStructure(int node)
 		{
@@ -1214,7 +1214,7 @@ namespace aabb
 
 		//! Assert that the sub-tree has valid metrics.
 		/*! \param node
-		        The index of the root node.
+				The index of the root node.
 		 */
 		private void validateMetrics(int node)
 		{
@@ -1257,7 +1257,7 @@ namespace aabb
 
 		//! Apply periodic boundary conditions.
 		/* \param position
-		        The position vector.
+				The position vector.
 		 */
 		private void periodicBoundaries(List<double> position)
 		{
@@ -1279,13 +1279,13 @@ namespace aabb
 
 		//! Compute minimum image separation.
 		/*! \param separation
-		        The separation vector.
+				The separation vector.
 
-		    \param shift
-		        The shift vector.
+			\param shift
+				The shift vector.
 
-		    \return
-		        Whether a periodic shift has been applied.
+			\return
+				Whether a periodic shift has been applied.
 		 */
 		private bool minimumImage(List<double> separation, List<double> shift)
 		{

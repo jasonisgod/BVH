@@ -8,15 +8,15 @@ namespace aabb
 {
 	/*! \brief A node of the AABB tree.
 
-	    Each node of the tree contains an AABB object which corresponds to a
-	    particle, or a group of particles, in the simulation box. The AABB
-	    objects of individual particles are "fattened" before they are stored
-	    to avoid having to continually update and rebalance the tree when
-	    displacements are small.
+		Each node of the tree contains an AABB object which corresponds to a
+		particle, or a group of particles, in the simulation box. The AABB
+		objects of individual particles are "fattened" before they are stored
+		to avoid having to continually update and rebalance the tree when
+		displacements are small.
 
-	    Nodes are aware of their position within in the tree. The isLeaf member
-	    function allows the tree to query whether the node is a leaf, i.e. to
-	    determine whether it holds a single particle.
+		Nodes are aware of their position within in the tree. The isLeaf member
+		function allows the tree to query whether the node is a leaf, i.e. to
+		determine whether it holds a single particle.
 	 */
 	public class Node
 	{
@@ -48,7 +48,7 @@ namespace aabb
 
 		//! Test whether the node is a leaf.
 		/*! \return
-		        Whether the node is a leaf node.
+				Whether the node is a leaf node.
 		 */
 		public bool isLeaf()
 		{
