@@ -1,6 +1,36 @@
-# AABB Tree
+# Implementation of BVH using AABBs
 
+![GitHub last commit](https://img.shields.io/github/last-commit/jasonisgod/BVH) 
+![GitHub commit checks state](https://img.shields.io/github/checks-status/jasonisgod/BVH/master) 
 
+![CRAN/METACRAN](https://img.shields.io/cran/l/devtools) 
+![NodePing uptime](https://img.shields.io/nodeping/uptime/jkiwn052-ntpp-4lbb-8d45-ihew6d9ucoei)
+
+![PingPong status](https://img.shields.io/pingpong/status/sp_2e80bc00b6054faeb2b87e2464be337e) 
+![GitHub](https://img.shields.io/github/license/jasonisgod/BVH) 
+
+## About
+A C# implementation of a dynamic bounding volume hierarchy
+([BVH](https://en.wikipedia.org/wiki/Bounding_volume_hierarchy)) using
+axis-aligned bounding boxes ([AABBs](https://en.wikipedia.org/wiki/Minimum_bounding_box)).
+The data structure provides an efficient way of detecting potential overlap
+between objects of arbitrary shape and size and is commonly used in
+computer game engines for collision detection and ray tracing.
+
+Because of their speed and flexibility, AABB trees are also well suited
+to overlap detection in physics applications, such as molecular simulation.
+They are particularly helpful for systems where there is a large size disparity
+between particle species, or whenever the particle density is extremely
+inhomogeneous. In such situations, traditional neighbour finding tools, such
+as [cell lists](https://en.wikipedia.org/wiki/Cell_lists), can become extremely
+inefficient (both in terms of memory footprint, and search speed). A good
+overview of the pros and cons of various neighbour finding algorithms
+can be found [here](http://hoomd-blue.readthedocs.io/en/stable/nlist.html).
+(Note that this only discusses the cost of _querying_ different data
+structures, not the additional overhead of building them, or maintaining
+them as objects move around.)
+
+![Alt text](img/test.png?raw=true "Title")
 
 ## Optimization
 ```
