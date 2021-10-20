@@ -18,7 +18,7 @@ namespace aabb
             int sampleInterval = 100; // The number of sweeps per sample.
             int nSmall = Convert.ToInt32(args[0]); // The number of small particles.
             int nLarge = 0; // The number of large particles.
-            double diameterSmall = 5; // The diameter of the small particles.
+            double diameterSmall = 1; // The diameter of the small particles.
             double diameterLarge = 50; // The diameter of the large particles.
             //double density = 0.1; // The system density.
             double maxDisp = 0.1; // Maximum trial displacement (in units of diameter).
@@ -44,7 +44,9 @@ namespace aabb
             List<double> boxSize = new List<double>() {baseLength, baseLength};
 
             // Initialise the random number generator.
-            Random random = new Random();
+            int seed = args.Length > 1? Convert.ToInt32(args[1]): System.DateTime.Now.GetHashCode();
+            Console.WriteLine(seed);
+            Random random = new Random(seed);
 
             // Initialise the AABB trees.
             aabb.Tree treeSmall = new aabb.Tree(2, maxDisp, periodicity, boxSize, nSmall);
@@ -56,7 +58,7 @@ namespace aabb
             /*             Generate the initial AABB trees.                  */
             /*****************************************************************/
 
-			Console.Write("\nInserting small particles into AABB tree ...\n");
+			Console.Write("Inserting small particles into AABB tree ...\n");
 			for (int i = 0;i < nSmall;i++)
             {
                 // Initialise the particle position vector.

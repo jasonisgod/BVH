@@ -1,2 +1,5 @@
 *.exe
 *.png
+.vscode/
+src/bin/
+src/obj/

@@ -18,6 +18,20 @@ namespace aabb
 	 */
 	public class AABB
 	{
+		/// Lower bound of AABB in each dimension.
+		public List<double> lowerBound = _.List<double>();
+
+		/// Upper bound of AABB in each dimension.
+		public List<double> upperBound = _.List<double>();
+
+		/// The position of the AABB centre.
+		public List<double> centre = _.List<double>();
+
+		/// The AABB's surface area.
+		public double surfaceArea;
+
+		public static AABB zero = new AABB(0);
+
 		/// Constructor.
 		public AABB()
 		{
@@ -118,6 +132,16 @@ namespace aabb
 			return surfaceArea;
 		}
 
+		public static AABB operator| (AABB aabb1, AABB aabb2)
+		{
+			return Union(aabb1, aabb2);
+		}
+
+		public static AABB operator& (AABB aabb1, AABB aabb2)
+		{
+			return Intersect(aabb1, aabb2);
+		}
+
 		//! Union two AABBs into this one.
 		/*! \param aabb1
 		        A reference to the first AABB.
@@ -127,8 +151,8 @@ namespace aabb
 		 */
 		public static AABB Union(AABB aabb1, AABB aabb2)
 		{
-			if (aabb1.lowerBound.Count != aabb2.lowerBound.Count) return new AABB(0);
-			if (aabb1.upperBound.Count != aabb2.upperBound.Count) return new AABB(0);
+			if (aabb1.lowerBound.Count != aabb2.lowerBound.Count) return AABB.zero;
+			if (aabb1.upperBound.Count != aabb2.upperBound.Count) return AABB.zero;
 
 			int dimension = aabb1.lowerBound.Count;
 			AABB aabb = new AABB(dimension);
@@ -147,8 +171,8 @@ namespace aabb
 
 		public static AABB Intersect(AABB aabb1, AABB aabb2)
 		{
-			if (aabb1.lowerBound.Count != aabb2.lowerBound.Count) return new AABB(0);
-			if (aabb1.upperBound.Count != aabb2.upperBound.Count) return new AABB(0);
+			if (aabb1.lowerBound.Count != aabb2.lowerBound.Count) return AABB.zero;
+			if (aabb1.upperBound.Count != aabb2.upperBound.Count) return AABB.zero;
 
 			int dimension = aabb1.lowerBound.Count;
 			AABB aabb = new AABB(dimension);
@@ -158,7 +182,7 @@ namespace aabb
 				aabb.lowerBound[i] = Math.Max(aabb1.lowerBound[i], aabb2.lowerBound[i]);
 				aabb.upperBound[i] = Math.Min(aabb1.upperBound[i], aabb2.upperBound[i]);
 				if (aabb.lowerBound[i] > aabb.upperBound[i])
-					return new AABB(0);
+					return AABB.zero;
 			}
 
 			aabb.surfaceArea = aabb.computeSurfaceArea();
@@ -262,18 +286,6 @@ namespace aabb
 			lowerBound.Resize(dimension);
 			upperBound.Resize(dimension);
 		}
-
-		/// Lower bound of AABB in each dimension.
-		public List<double> lowerBound = _.List<double>();
-
-		/// Upper bound of AABB in each dimension.
-		public List<double> upperBound = _.List<double>();
-
-		/// The position of the AABB centre.
-		public List<double> centre = _.List<double>();
-
-		/// The AABB's surface area.
-		public double surfaceArea;
 
 		public override string ToString()
 		{

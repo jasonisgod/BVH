@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Threading;
+//using System.Drawing.Common;
+using System.Linq;
 
 namespace aabb
 {
@@ -687,7 +688,7 @@ namespace aabb
 
 				double surfaceArea = nodes[index].aabb.getSurfaceArea();
 
-				AABB combinedAABB = AABB.Union(nodes[index].aabb, leafAABB);
+				AABB combinedAABB = (nodes[index].aabb | leafAABB);
 				double combinedSurfaceArea = combinedAABB.getSurfaceArea();
 
 				// Cost of creating a new parent for this node and the new leaf.
@@ -700,12 +701,12 @@ namespace aabb
 				double costLeft;
 				if (nodes[left].isLeaf())
 				{
-					AABB aabb = AABB.Union(leafAABB, nodes[left].aabb);
+					AABB aabb = (leafAABB | nodes[left].aabb);
 					costLeft = aabb.getSurfaceArea() + inheritanceCost;
 				}
 				else
 				{
-					AABB aabb = AABB.Union(leafAABB, nodes[left].aabb);
+					AABB aabb = (leafAABB | nodes[left].aabb);
 					double oldArea = nodes[left].aabb.getSurfaceArea();
 					double newArea = aabb.getSurfaceArea();
 					costLeft = (newArea - oldArea) + inheritanceCost;
@@ -715,12 +716,12 @@ namespace aabb
 				double costRight;
 				if (nodes[right].isLeaf())
 				{
-					AABB aabb = AABB.Union(leafAABB, nodes[right].aabb);
+					AABB aabb = (leafAABB | nodes[right].aabb);
 					costRight = aabb.getSurfaceArea() + inheritanceCost;
 				}
 				else
 				{
-					AABB aabb = AABB.Union(leafAABB, nodes[right].aabb);
+					AABB aabb = (leafAABB | nodes[right].aabb);
 					double oldArea = nodes[right].aabb.getSurfaceArea();
 					double newArea = aabb.getSurfaceArea();
 					costRight = (newArea - oldArea) + inheritanceCost;
@@ -749,7 +750,7 @@ namespace aabb
 			int oldParent = nodes[sibling].parent;
 			int newParent = allocateNode();
 			nodes[newParent].parent = oldParent;
-			nodes[newParent].aabb = AABB.Union(leafAABB, nodes[sibling].aabb);
+			nodes[newParent].aabb = (leafAABB | nodes[sibling].aabb);
 			nodes[newParent].aabb.fatten(skinThickness);
 			nodes[newParent].height = nodes[sibling].height + 1;
 
@@ -779,15 +780,13 @@ namespace aabb
 				nodes[leaf].parent = newParent;
 				root = newParent;
 			}
+			update(newParent);
 			
 			// Walk back up the tree fixing heights and AABBs.
 			index = nodes[leaf].parent;
 			while (index != -1)
 			{
-				index = balance(index);
-				update(index);
-				optimize(index);
-				// optimize2(index);
+				balance(index);
 				index = nodes[index].parent;
 			}
 			
@@ -837,10 +836,7 @@ namespace aabb
 				int index = grandParent;
 				while (index != -1)
 				{
-					index = balance(index);
-					update(index);
-					optimize(index);
-					//optimize2(index);
+					balance(index);
 					index = nodes[index].parent;
 				}
 			}
@@ -855,14 +851,15 @@ namespace aabb
 		private void update(int node)
 		{
 			if (node == -1) return;
-			if (nodes[node].isLeaf()) return;
-
-			int left = nodes[node].left;
-			int right = nodes[node].right;
-
-			nodes[node].height = 1 + Math.Max(nodes[left].height, nodes[right].height);
-			nodes[node].aabb = AABB.Union(nodes[left].aabb, nodes[right].aabb);
-			nodes[node].aabb.fatten(skinThickness);
+			if (!nodes[node].isLeaf())
+			{
+				int left = nodes[node].left;
+				int right = nodes[node].right;
+				nodes[node].height = 1 + Math.Max(nodes[left].height, nodes[right].height);
+				nodes[node].aabb = (nodes[left].aabb | nodes[right].aabb);
+				nodes[node].aabb.fatten(skinThickness);
+			}
+			update(nodes[node].parent);
 		}
 
 		private void swap(int node1, int node2)
@@ -879,248 +876,101 @@ namespace aabb
 				else nodes[par1].right = node2;
 			if (nodes[par2].left == node2) nodes[par2].left = node1;
 				else nodes[par2].right = node1;
+
+			update(node1);
+			update(node2);
 		}
 
-		private int balance(int node)
+		class AABBPair
 		{
-			//return node;
-			Debug.Assert(node != -1);
-
-			if (nodes[node].isLeaf() || (nodes[node].height < 2))
-			{
-				return node;
-			}
-
-			int left = nodes[node].left;
-			int right = nodes[node].right;
-
-			Debug.Assert(left < nodeCapacity);
-			Debug.Assert(right < nodeCapacity);
-
-			int currentBalance = nodes[right].height - nodes[left].height;
-
-			// Rotate right branch up.
-			if (currentBalance > 1)
-			{
-				int rightLeft = nodes[right].left;
-				int rightRight = nodes[right].right;
-
-				Debug.Assert(rightLeft < nodeCapacity);
-				Debug.Assert(rightRight < nodeCapacity);
-
-				// Swap node and its right-hand child.
-				nodes[right].left = node;
-				nodes[right].parent = nodes[node].parent;
-				nodes[node].parent = right;
-
-				// The node's old parent should now point to its right-hand child.
-				if (nodes[right].parent != -1)
-				{
-					if (nodes[nodes[right].parent].left == node)
-					{
-						nodes[nodes[right].parent].left = right;
-					}
-					else
-					{
-						Debug.Assert(nodes[nodes[right].parent].right == node);
-						nodes[nodes[right].parent].right = right;
-					}
-				}
-				else
-				{
-					root = right;
-				}
-
-				// Rotate.
-				if (nodes[rightLeft].height > nodes[rightRight].height)
-				{
-					nodes[right].right = rightLeft;
-					nodes[node].right = rightRight;
-					nodes[rightRight].parent = node;
-					nodes[node].aabb = AABB.Union(nodes[left].aabb, nodes[rightRight].aabb);
-					nodes[right].aabb = AABB.Union(nodes[node].aabb, nodes[rightLeft].aabb);
-
-					nodes[node].height = 1 + Math.Max(nodes[left].height, nodes[rightRight].height);
-					nodes[right].height = 1 + Math.Max(nodes[node].height, nodes[rightLeft].height);
-				}
-				else
-				{
-					nodes[right].right = rightRight;
-					nodes[node].right = rightLeft;
-					nodes[rightLeft].parent = node;
-					nodes[node].aabb = AABB.Union(nodes[left].aabb, nodes[rightLeft].aabb);
-					nodes[right].aabb = AABB.Union(nodes[node].aabb, nodes[rightRight].aabb);
-
-					nodes[node].height = 1 + Math.Max(nodes[left].height, nodes[rightLeft].height);
-					nodes[right].height = 1 + Math.Max(nodes[node].height, nodes[rightRight].height);
-				}
-
-				return right;
-			}
-
-			// Rotate left branch up.
-			if (currentBalance < -1)
-			{
-				int leftLeft = nodes[left].left;
-				int leftRight = nodes[left].right;
-
-				Debug.Assert(leftLeft < nodeCapacity);
-				Debug.Assert(leftRight < nodeCapacity);
-
-				// Swap node and its left-hand child.
-				nodes[left].left = node;
-				nodes[left].parent = nodes[node].parent;
-				nodes[node].parent = left;
-
-				// The node's old parent should now point to its left-hand child.
-				if (nodes[left].parent != -1)
-				{
-					if (nodes[nodes[left].parent].left == node)
-					{
-						nodes[nodes[left].parent].left = left;
-					}
-					else
-					{
-						Debug.Assert(nodes[nodes[left].parent].right == node);
-						nodes[nodes[left].parent].right = left;
-					}
-				}
-				else
-				{
-					root = left;
-				}
-
-				// Rotate.
-				if (nodes[leftLeft].height > nodes[leftRight].height)
-				{
-					nodes[left].right = leftLeft;
-					nodes[node].left = leftRight;
-					nodes[leftRight].parent = node;
-					nodes[node].aabb = AABB.Union(nodes[right].aabb, nodes[leftRight].aabb);
-					nodes[left].aabb = AABB.Union(nodes[node].aabb, nodes[leftLeft].aabb);
-
-					nodes[node].height = 1 + Math.Max(nodes[right].height, nodes[leftRight].height);
-					nodes[left].height = 1 + Math.Max(nodes[node].height, nodes[leftLeft].height);
-				}
-				else
-				{
-					nodes[left].right = leftRight;
-					nodes[node].left = leftLeft;
-					nodes[leftLeft].parent = node;
-					nodes[node].aabb = AABB.Union(nodes[right].aabb, nodes[leftLeft].aabb);
-					nodes[left].aabb = AABB.Union(nodes[node].aabb, nodes[leftRight].aabb);
-
-					nodes[node].height = 1 + Math.Max(nodes[right].height, nodes[leftLeft].height);
-					nodes[left].height = 1 + Math.Max(nodes[node].height, nodes[leftRight].height);
-				}
-
-				return left;
-			}
-			
-			return node;
+			public AABB aabb1;
+			public AABB aabb2;
+			public int index;
 		}
-		
-		private void optimize(int node)
+
+		private void balance(int node)
 		{
 			if (node == -1) return;
-			if (nodes[node].isLeaf()) return;
+			if (nodes[node].height < 2) return;
 
-			int left = nodes[node].left;
-			int right = nodes[node].right;
-
-			if (nodes[left].isLeaf() || nodes[right].isLeaf()) return;
-			
-			int n1 = nodes[left].left;
-			int n2 = nodes[left].right;
-			int n3 = nodes[right].left;
-			int n4 = nodes[right].right;
-
-			AABB u12 = AABB.Union(nodes[n1].aabb, nodes[n2].aabb); double a12 = u12.Area();
-			AABB u13 = AABB.Union(nodes[n1].aabb, nodes[n3].aabb); double a13 = u13.Area();
-			AABB u14 = AABB.Union(nodes[n1].aabb, nodes[n4].aabb); double a14 = u14.Area();
-			AABB u23 = AABB.Union(nodes[n2].aabb, nodes[n3].aabb); double a23 = u23.Area();
-			AABB u24 = AABB.Union(nodes[n2].aabb, nodes[n4].aabb); double a24 = u24.Area();
-			AABB u34 = AABB.Union(nodes[n3].aabb, nodes[n4].aabb); double a34 = u34.Area();
-
-			double x1234 = AABB.Intersect(u12, u34).Area();
-			double x1324 = AABB.Intersect(u13, u24).Area();
-			double x1423 = AABB.Intersect(u14, u23).Area();
-			double xMin = Math.Min(Math.Min(x1234, x1324), x1423);
-			bool b1234 = (xMin == x1234);
-			bool b1324 = (xMin == x1324);
-			bool b1423 = (xMin == x1423);
-
-			if (Convert.ToInt32(b1234) + Convert.ToInt32(b1324) + Convert.ToInt32(b1423) > 1)
+			bool b(Node node1, Node node2)
 			{
-				double a1234 = b1234? u12.Area() + u34.Area(): double.MaxValue;
-				double a1324 = b1324? u13.Area() + u24.Area(): double.MaxValue;
-				double a1423 = b1423? u14.Area() + u23.Area(): double.MaxValue;
-				double aMin = Math.Min(Math.Min(a1234, a1324), a1423);
-				b1234 = (aMin == a1234);
-				b1324 = (aMin == a1324);
-				b1423 = (aMin == a1423);
-
-				if (Convert.ToInt32(b1234) + Convert.ToInt32(b1324) + Convert.ToInt32(b1423) > 1)
-				{
-					double r1234 = b1234? Math.Max(a12, a34) / Math.Min(a12, a34): double.MaxValue;
-					double r1324 = b1324? Math.Max(a13, a24) / Math.Min(a13, a24): double.MaxValue;
-					double r1423 = b1423? Math.Max(a14, a23) / Math.Min(a14, a23): double.MaxValue;
-					double rMin = Math.Min(Math.Min(r1234, r1324), r1423);
-					b1234 = (rMin == r1234);
-					b1324 = (rMin == r1324);
-					b1423 = (rMin == r1423);
-				} 
+				return Math.Abs(node1.height - node2.height) < 2;
 			}
-			
-			if (b1234) {
-				// pass
-			} else if (b1324) {
-				swap(n2, n3);
-			} else if (b1423) {
-				swap(n2, n4);
-			}
-			
-			update(left);
-			update(right);
-		}
 
-		private void optimize2(int node)
-		{
-			if (node == -1) return;
-			if (nodes[node].isLeaf()) return;
-
-			for (int i = 0; i < 2; i++)
+			Node u(Node node1, Node node2)
 			{
-				int left = nodes[node].left;
-				int right = nodes[node].right;
-				if (i == 1) 
+				return new Node() {height = Math.Max(node1.height, node2.height) + 1};
+			};
+
+			int getFirst(List<AABBPair> list)
+			{
+				if (list.Count() == 0) return 0;
+				return list
+					.OrderBy(_ => (_.aabb1 & _.aabb2).Area())
+					.ThenBy(_ => _.aabb1.Area() + _.aabb2.Area())
+					// .ThenBy(_ => Math.Max(_.aabb1.Area(), _.aabb2.Area()))
+					// .ThenBy(_ => Math.Abs(_.aabb1.Area() - _.aabb2.Area()))
+					.First().index;
+			};
+			
+			// 3-nodes
+			{
+				Node nL = nodes[nodes[node].left];
+				Node nR = nodes[nodes[node].right];
+				Node n1 = nL.left == -1? null: nodes[nL.left];
+				Node n2 = nL.right == -1? null: nodes[nL.right];
+				Node n3 = nR.left == -1? null: nodes[nR.left];
+				Node n4 = nR.right == -1? null: nodes[nR.right];
+
+				var list = new[]
 				{
-					int tmp = left; left = right; right = tmp;
+					new {index = 0, nLR = nR, n1 = n1, n2 = n2},
+					new {index = 1, nLR = n1, n1 = nR, n2 = n2},
+					new {index = 2, nLR = n2, n1 = nR, n2 = n1},
+					new {index = 0, nLR = nL, n1 = n3, n2 = n4},
+					new {index = 3, nLR = n3, n1 = nL, n2 = n4},
+					new {index = 4, nLR = n4, n1 = nL, n2 = n3},
+				}.ToList()
+					.Where(_ => (_.nLR != null && _.n1 != null && _.n2 != null))
+					.Where(_ => b(_.n1, _.n2) && b(u(_.n1, _.n2), _.nLR))
+					.Select(_ => new AABBPair {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = _.nLR.aabb, index = _.index});
+
+				switch (getFirst(list.ToList()))
+				{
+					case 0: break;
+					case 1: swap(nodes.IndexOf(nR), nodes.IndexOf(n1)); break;
+					case 2: swap(nodes.IndexOf(nR), nodes.IndexOf(n2)); break;
+					case 3: swap(nodes.IndexOf(nL), nodes.IndexOf(n3)); break;
+					case 4: swap(nodes.IndexOf(nL), nodes.IndexOf(n4)); break;
 				}
+			}
 
-				if (nodes[left].isLeaf()) continue;
-				if (nodes[left].height < nodes[right].height) continue;
+			// 4-nodes
+			{
+				Node nL = nodes[nodes[node].left];
+				Node nR = nodes[nodes[node].right];
+				Node n1 = nL.left == -1? null: nodes[nL.left];
+				Node n2 = nL.right == -1? null: nodes[nL.right];
+				Node n3 = nR.left == -1? null: nodes[nR.left];
+				Node n4 = nR.right == -1? null: nodes[nR.right];
 
-				int n1 = nodes[left].left;
-				int n2 = nodes[left].right;
-				double aL = nodes[left].aabb.Area();
-				double aR = nodes[right].aabb.Area();
-				double a1 = nodes[n1].aabb.Area();
-				double a2 = nodes[n2].aabb.Area();
-				double aR1 = AABB.Union(nodes[right].aabb, nodes[n1].aabb).Area();
-				double aR2 = AABB.Union(nodes[right].aabb, nodes[n2].aabb).Area();
-				double aMin = Math.Min(Math.Min(a1 + aR2, a2 + aR1), aL + aR);
-				if (aMin == a1 + aR2) swap(right, n1);
-				if (aMin == a2 + aR1) swap(right, n2);
-				update(left);
-				update(right);
-				// Console.Write(node);
-				// Console.Write("\n");
-				// Console.Write(aL + aR); Console.Write(" ");
-				// Console.Write(a1 + aR2); Console.Write(" ");
-				// Console.Write(a2 + aR1); Console.Write(" ");
-				// Console.Write("\n");
-
+				var list = new[]
+				{
+					new {index = 0, n1 = n1, n2 = n2, n3 = n3, n4 = n4},
+					new {index = 1, n1 = n1, n2 = n3, n3 = n2, n4 = n4},
+					new {index = 2, n1 = n1, n2 = n4, n3 = n3, n4 = n2},
+				}.ToList()
+					.Where(_ => (_.n1 != null && _.n2 != null && _.n3 != null && _.n4 != null))
+					.Where(_ => b(_.n1, _.n2) && b(_.n3, _.n4) && b(u(_.n1, _.n2), u(_.n3, _.n4)))
+					.Select(_ => new AABBPair {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = (_.n3.aabb | _.n4.aabb), index = _.index});
+				
+				switch (getFirst(list.ToList()))
+				{
+					case 0: break;
+					case 1: swap(nodes.IndexOf(n2), nodes.IndexOf(n3)); break;
+					case 2: swap(nodes.IndexOf(n2), nodes.IndexOf(n4)); break;
+				}
 			}
 		}
 
@@ -1290,7 +1140,7 @@ namespace aabb
 					for (int j = i + 1;j < count;j++)
 					{
 						AABB aabbj = nodes[nodeIndices[j]].aabb;
-						AABB aabb = AABB.Union(aabbi, aabbj);
+						AABB aabb = (aabbi | aabbj);
 						double cost = aabb.getSurfaceArea();
 
 						if (cost < minCost)
@@ -1309,7 +1159,7 @@ namespace aabb
 				nodes[parent].left = index1;
 				nodes[parent].right = index2;
 				nodes[parent].height = 1 + Math.Max(nodes[index1].height, nodes[index2].height);
-				nodes[parent].aabb = AABB.Union(nodes[index1].aabb, nodes[index2].aabb);
+				nodes[parent].aabb = (nodes[index1].aabb | nodes[index2].aabb);
 				nodes[parent].parent = -1;
 
 				nodes[index1].parent = parent;
@@ -1324,7 +1174,6 @@ namespace aabb
 
 			validate();
 		}
-
 
 		//! Assert that the sub-tree has a valid structure.
 		/*! \param node
@@ -1394,7 +1243,7 @@ namespace aabb
 			//height; // Unused variable in Release build
 			Debug.Assert(nodes[node].height == height);
 
-			AABB aabb = AABB.Union(nodes[left].aabb, nodes[right].aabb);
+			AABB aabb = (nodes[left].aabb | nodes[right].aabb);
 
 			for (int i = 0;i < dimension;i++)
 			{
