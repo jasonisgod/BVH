@@ -48,6 +48,8 @@ Options
 
 ## TODO
 - node-aabb-polygon
+	- capitalize method name
+	- edit insertLeaf(): find nearest as sibling
 	- object <-> nodes pointer mapping
 	- create aabb by polygon
 - closest point search

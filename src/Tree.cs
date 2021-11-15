@@ -881,11 +881,9 @@ namespace aabb
 			update(node2);
 		}
 
-		class AABBPair
+		private void swap(Node node1, Node node2)
 		{
-			public AABB aabb1;
-			public AABB aabb2;
-			public int index;
+			swap(nodes.IndexOf(node1), nodes.IndexOf(node2));
 		}
 
 		private void balance(int node)
@@ -902,18 +900,8 @@ namespace aabb
 			{
 				return new Node() {height = Math.Max(node1.height, node2.height) + 1};
 			};
-
-			int getFirst(List<AABBPair> list)
-			{
-				if (list.Count() == 0) return 0;
-				return list
-					.OrderBy(_ => (_.aabb1 & _.aabb2).Area())
-					.ThenBy(_ => _.aabb1.Area() + _.aabb2.Area())
-					// .ThenBy(_ => Math.Max(_.aabb1.Area(), _.aabb2.Area()))
-					// .ThenBy(_ => Math.Abs(_.aabb1.Area() - _.aabb2.Area()))
-					.First().index;
-			};
 			
+			Console.WriteLine("balance()");
 			// 3-nodes
 			{
 				Node nL = nodes[nodes[node].left];
@@ -925,24 +913,30 @@ namespace aabb
 
 				var list = new[]
 				{
-					new {index = 0, nLR = nR, n1 = n1, n2 = n2},
-					new {index = 1, nLR = n1, n1 = nR, n2 = n2},
-					new {index = 2, nLR = n2, n1 = nR, n2 = n1},
-					new {index = 0, nLR = nL, n1 = n3, n2 = n4},
-					new {index = 3, nLR = n3, n1 = nL, n2 = n4},
-					new {index = 4, nLR = n4, n1 = nL, n2 = n3},
+					new {index = 0, n0 = nR, n1 = n1, n2 = n2},
+					new {index = 1, n0 = n1, n1 = nR, n2 = n2},
+					new {index = 2, n0 = n2, n1 = nR, n2 = n1},
+					new {index = 0, n0 = nL, n1 = n3, n2 = n4},
+					new {index = 3, n0 = n3, n1 = nL, n2 = n4},
+					new {index = 4, n0 = n4, n1 = nL, n2 = n3},
 				}.ToList()
-					.Where(_ => (_.nLR != null && _.n1 != null && _.n2 != null))
-					.Where(_ => b(_.n1, _.n2) && b(u(_.n1, _.n2), _.nLR))
-					.Select(_ => new AABBPair {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = _.nLR.aabb, index = _.index});
+					.Where(_ => (_.n0 != null && _.n1 != null && _.n2 != null))
+					.Where(_ => b(_.n1, _.n2) && b(u(_.n1, _.n2), _.n0))
+					.Select(_ => new {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = _.n0.aabb, index = _.index})
+					.OrderBy(_ => (_.aabb1 & _.aabb2).Area())
+					// .ThenBy(_ => _.aabb1.Area() + _.aabb2.Area());
+					.ThenBy(_ => Math.Max(_.aabb1.Area(), _.aabb2.Area()));
+					// .ThenBy(_ => Math.Abs(_.aabb1.Area() - _.aabb2.Area()))
 
-				switch (getFirst(list.ToList()))
+				var index = list.Any()? list.First().index: 0;
+				Console.WriteLine("3 nodes : " + index.ToString());
+				switch (index)
 				{
-					case 0: break;
-					case 1: swap(nodes.IndexOf(nR), nodes.IndexOf(n1)); break;
-					case 2: swap(nodes.IndexOf(nR), nodes.IndexOf(n2)); break;
-					case 3: swap(nodes.IndexOf(nL), nodes.IndexOf(n3)); break;
-					case 4: swap(nodes.IndexOf(nL), nodes.IndexOf(n4)); break;
+					case 1: swap(nR, n1); break;
+					case 2: swap(nR, n2); break;
+					case 3: swap(nL, n3); break;
+					case 4: swap(nL, n4); break;
+					default: break;
 				}
 			}
 
@@ -963,13 +957,19 @@ namespace aabb
 				}.ToList()
 					.Where(_ => (_.n1 != null && _.n2 != null && _.n3 != null && _.n4 != null))
 					.Where(_ => b(_.n1, _.n2) && b(_.n3, _.n4) && b(u(_.n1, _.n2), u(_.n3, _.n4)))
-					.Select(_ => new AABBPair {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = (_.n3.aabb | _.n4.aabb), index = _.index});
+					.Select(_ => new {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = (_.n3.aabb | _.n4.aabb), index = _.index})
+					.OrderBy(_ => (_.aabb1 & _.aabb2).Area())
+					.ThenBy(_ => _.aabb1.Area() + _.aabb2.Area());
+					// .ThenBy(_ => Math.Max(_.aabb1.Area(), _.aabb2.Area()))
+					// .ThenBy(_ => Math.Abs(_.aabb1.Area() - _.aabb2.Area()))
 				
-				switch (getFirst(list.ToList()))
+				var index = list.Any()? list.First().index: 0;
+				Console.WriteLine("4 nodes : " + index.ToString());
+				switch (index)
 				{
-					case 0: break;
-					case 1: swap(nodes.IndexOf(n2), nodes.IndexOf(n3)); break;
-					case 2: swap(nodes.IndexOf(n2), nodes.IndexOf(n4)); break;
+					case 1: swap(n2, n3); break;
+					case 2: swap(n2, n4); break;
+					default: break;
 				}
 			}
 		}

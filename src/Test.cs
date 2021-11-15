@@ -16,7 +16,7 @@ namespace aabb
 
 			int nSweeps = 100000; // The number of Monte Carlo sweeps.
 			int sampleInterval = 100; // The number of sweeps per sample.
-			int nSmall = Convert.ToInt32(args[0]); // The number of small particles.
+			int nSmall = args.Length > 0? Convert.ToInt32(args[0]): 100; // The number of small particles.
 			int nLarge = 0; // The number of large particles.
 			double diameterSmall = 1; // The diameter of the small particles.
 			double diameterLarge = 50; // The diameter of the large particles.
@@ -45,7 +45,7 @@ namespace aabb
 
 			// Initialise the random number generator.
 			int seed = args.Length > 1? Convert.ToInt32(args[1]): System.DateTime.Now.GetHashCode();
-			Console.WriteLine(seed);
+			Console.WriteLine("Seed: " + seed.ToString());
 			Random random = new Random(seed);
 
 			// Initialise the AABB trees.
@@ -58,7 +58,7 @@ namespace aabb
 			/*			 Generate the initial AABB trees.				  */
 			/*****************************************************************/
 
-			Console.Write("Inserting small particles into AABB tree ...\n");
+			// Console.Write("Inserting small particles into AABB tree ...\n");
 			for (int i = 0;i < nSmall;i++)
 			{
 				// Initialise the particle position vector.
@@ -67,13 +67,14 @@ namespace aabb
 				position[1] = boxSize[1] * (random.NextDouble() * 0.8 + 0.1);
 
 				// Insert particle into tree.
+				// Console.Write("Insert\n");
 				treeSmall.insertParticle(i, position, radiusSmall * (1 + 5 * random.NextDouble()));
 				//Thread.Sleep(50);
 
 				// Store the position.
 				positionsSmall[i] = _.List<double>(position);
 			}
-			Console.Write("Tree generated!\n");
+			// Console.Write("Tree generated!\n");
 
 			treeSmall.Draw(@"test.png", baseLength, 1);
 			//Console.WriteLine(treeSmall);
