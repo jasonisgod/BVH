@@ -23,7 +23,7 @@ They are particularly helpful for systems where there is a large size disparity
 between particle species, or whenever the particle density is extremely
 inhomogeneous.
 
-![Alt text](img/readme.png?raw=true "Title")
+![Alt text](README.png?raw=true "Title")
 
 ## Optimization
 ```
