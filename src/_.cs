@@ -8,7 +8,7 @@ namespace BVH
 {
     internal static class _
     {
-        public static void Resize<T>(this List<T> list, int size, T value = default(T)) where T : new()
+        public static void Resize<T>(this List<T> list, int size, T? value = default(T)) where T : new()
         {
             list.Clear();
             for (int i = 0; i < size; i++)
@@ -17,7 +17,7 @@ namespace BVH
             }
         }
 
-        public static List<T> List<T>(int size = 0, T value = default(T)) where T : new()
+        public static List<T> List<T>(int size = 0, T? value = default(T)) where T : new()
         {
             List<T> list = new List<T>();
             list.Resize(size, value);

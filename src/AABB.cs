@@ -6,299 +6,190 @@ using System.Threading;
 
 namespace BVH
 {
-	/*! \brief The axis-aligned bounding box object.
-
-		Axis-aligned bounding boxes (AABBs) store information for the minimum
-		orthorhombic bounding-box for an object. Support is provided for
-		dimensions >= 2. (In 2D the bounding box is either a rectangle,
-		in 3D it is a rectangular prism.)
-
-		Class member functions provide functionality for merging AABB objects
-		and testing overlap with other AABBs.
-	 */
 	public class AABB
 	{
-		/// Lower bound of AABB in each dimension.
-		public List<double> lowerBound = _.List<double>();
+		public const double OFFSET = 2;
 
-		/// Upper bound of AABB in each dimension.
-		public List<double> upperBound = _.List<double>();
+		public int dim;
+		public double gap;
+		public List<double> lb;
+		public List<double> ub;
 
-		/// The position of the AABB centre.
-		public List<double> centre = _.List<double>();
-
-		/// The AABB's surface area.
-		public double surfaceArea;
-
-		public static AABB zero = new AABB(0);
-
-		/// Constructor.
-		public AABB()
+		public AABB(int dim_, double gap_)
 		{
-		}
-
-		//! Constructor.
-		/*! \param dimension
-				The dimensionality of the system.
-		 */
-		public AABB(int dimension)
-		{
-			//Debug.Assert(dimension >= 2);
-			lowerBound.Resize(dimension);
-			upperBound.Resize(dimension);
-		}
-
-		//! Constructor.
-		/*! \param lowerBound_
-				The lower bound in each dimension.
-
-			\param upperBound_
-				The upper bound in each dimension.
-		 */
-		public AABB(List<double> lowerBound_, List<double> upperBound_)
-		{
-			this.lowerBound = _.List<double>(lowerBound_);
-			this.upperBound = _.List<double>(upperBound_);
-			// Validate the dimensionality of the bounds vectors.
-			if (lowerBound.Count != upperBound.Count)
+			Reset(dim_, gap_);
+			for (int i = 0; i < dim; i++)
 			{
-				throw new System.ArgumentException("[ERROR]: Dimensionality mismatch!");
+				lb[i] = 0;
+				ub[i] = 0;
 			}
-
-			// Validate that the upper bounds exceed the lower bounds.
-			for (int i = 0;i < lowerBound.Count;i++)
-			{
-				// Validate the bound.
-				if (lowerBound[i] > upperBound[i])
-				{
-					throw new System.ArgumentException("[ERROR]: AABB lower bound is greater than the upper bound!");
-				}
-			}
-
-			surfaceArea = computeSurfaceArea();
-			centre = _.List<double>(computeCentre());
+			Fatten();
 		}
 
-		public void fatten(double k)
+		public AABB(int dim_, double gap_, List<double> lb_, List<double> ub_)
 		{
-			for (int i = 0;i < lowerBound.Count;i++)
+			Reset(dim_, gap_);
+			for (int i = 0; i < dim; i++)
 			{
-				// double offset = k * (upperBound[i] - lowerBound[i]);
-				double offset = 2;
-				lowerBound[i] -= offset;
-				upperBound[i] += offset;
+				lb[i] = lb_[i];
+				ub[i] = ub_[i];
 			}
+			Fatten();
 		}
 
-		/// Compute the surface area of the box.
-		public double computeSurfaceArea()
+		public AABB(int dim_, double gap_, List<double> center, double radius)
 		{
-			// Sum of "area" of all the sides.
+			Reset(dim_, gap_);
+			for (int i = 0; i < dim; i++)
+			{
+				lb[i] = center[i] - radius;
+				ub[i] = center[i] + radius;
+			}
+			Fatten();
+		}
+
+		private void Reset(int dim_, double gap_)
+		{
+			dim = dim_;
+			gap = gap_;
+			lb = _.List<double>(dim);
+			ub = _.List<double>(dim);
+		}
+
+		public void Fatten()
+		{
+			// AABB aabb = new AABB(dim, gap, lb, ub);
+			for (int i = 0; i < dim; i++)
+			{
+				// double offset = gap * (ub[i] - lb[i]);
+				lb[i] -= OFFSET;
+				ub[i] += OFFSET;
+			}
+			// return aabb;
+		}
+
+		public double Area()
+		{
 			double sum = 0;
 
-			// General formula for one side: hold one dimension constant
-			// and multiply by all the other ones.
-			for (int d1 = 0; d1 < lowerBound.Count; d1++)
+			for (int d1 = 0; d1 < dim; d1++)
 			{
-				// "Area" of current side.
 				double product = 1;
-
-				for (int d2 = 0; d2 < lowerBound.Count; d2++)
+				for (int d2 = 0; d2 < dim; d2++)
 				{
 					if (d1 == d2)
 					{
 						continue;
 					}
-
-					double dx = upperBound[d2] - lowerBound[d2];
-					product *= dx;
+					product *= ub[d2] - lb[d2];
 				}
-
-				// Update the sum.
 				sum += product;
 			}
 
 			return 2.0 * sum;
 		}
 
-		public double Area()
+		public static AABB operator| (AABB x, AABB y)
 		{
-			return computeSurfaceArea();
-		}
-		
-		/// Get the surface area of the box.
-		public double getSurfaceArea()
-		{
-			return surfaceArea;
+			return Union(x, y);
 		}
 
-		public static AABB operator| (AABB aabb1, AABB aabb2)
+		public static AABB operator& (AABB x, AABB y)
 		{
-			return Union(aabb1, aabb2);
+			return Intersect(x, y);
 		}
 
-		public static AABB operator& (AABB aabb1, AABB aabb2)
+		public static AABB Union(AABB x, AABB y)
 		{
-			return Intersect(aabb1, aabb2);
-		}
+			AABB aabb = new AABB(x.dim, x.gap);
 
-		//! Union two AABBs into this one.
-		/*! \param aabb1
-				A reference to the first AABB.
-
-			\param aabb2
-				A reference to the second AABB.
-		 */
-		public static AABB Union(AABB aabb1, AABB aabb2)
-		{
-			if (aabb1.lowerBound.Count != aabb2.lowerBound.Count) return AABB.zero;
-			if (aabb1.upperBound.Count != aabb2.upperBound.Count) return AABB.zero;
-
-			int dimension = aabb1.lowerBound.Count;
-			AABB aabb = new AABB(dimension);
-
-			for (int i = 0;i < dimension;i++)
+			for (int i = 0; i < x.dim; i++)
 			{
-				aabb.lowerBound[i] = Math.Min(aabb1.lowerBound[i], aabb2.lowerBound[i]);
-				aabb.upperBound[i] = Math.Max(aabb1.upperBound[i], aabb2.upperBound[i]);
+				aabb.lb[i] = Math.Min(x.lb[i], y.lb[i]);
+				aabb.ub[i] = Math.Max(x.ub[i], y.ub[i]);
 			}
 
-			aabb.surfaceArea = aabb.computeSurfaceArea();
-			aabb.centre = _.List<double>(aabb.computeCentre());
-
+			aabb.Fatten();
 			return aabb;
 		}
 
-		public static AABB Intersect(AABB aabb1, AABB aabb2)
+		public static AABB Intersect(AABB x, AABB y)
 		{
-			if (aabb1.lowerBound.Count != aabb2.lowerBound.Count) return AABB.zero;
-			if (aabb1.upperBound.Count != aabb2.upperBound.Count) return AABB.zero;
+			AABB aabb = new AABB(x.dim, x.gap);
 
-			int dimension = aabb1.lowerBound.Count;
-			AABB aabb = new AABB(dimension);
-
-			for (int i = 0;i < dimension;i++)
+			for (int i = 0; i < x.dim; i++)
 			{
-				aabb.lowerBound[i] = Math.Max(aabb1.lowerBound[i], aabb2.lowerBound[i]);
-				aabb.upperBound[i] = Math.Min(aabb1.upperBound[i], aabb2.upperBound[i]);
-				if (aabb.lowerBound[i] > aabb.upperBound[i])
-					return AABB.zero;
+				aabb.lb[i] = Math.Max(x.lb[i], y.lb[i]);
+				aabb.ub[i] = Math.Min(x.ub[i], y.ub[i]);
+
+				if (aabb.lb[i] > aabb.ub[i])
+				{
+					return new AABB(x.dim, x.gap);
+				}
 			}
-
-			aabb.surfaceArea = aabb.computeSurfaceArea();
-			aabb.centre = _.List<double>(aabb.computeCentre());
-
+			
+			aabb.Fatten();
 			return aabb;
 		}
 
-		//! Test whether the AABB is contained within this one.
-		/*! \param aabb
-				A reference to the AABB.
-
-			\return
-				Whether the AABB is fully contained.
-		 */
-		public bool contains(AABB aabb)
+		public bool Contains(AABB aabb)
 		{
-			Debug.Assert(aabb.lowerBound.Count == lowerBound.Count);
-
-			for (int i = 0;i < lowerBound.Count;i++)
+			for (int i = 0; i < dim; i++)
 			{
-				if (aabb.lowerBound[i] < lowerBound[i])
+				if (aabb.lb[i] < lb[i])
 				{
 					return false;
 				}
-				if (aabb.upperBound[i] > upperBound[i])
+				if (aabb.ub[i] > ub[i])
 				{
 					return false;
 				}
 			}
-
 			return true;
 		}
 
-		//! Test whether the AABB overlaps this one.
-		/*! \param aabb
-				A reference to the AABB.
-
-			\param touchIsOverlap
-				Does touching constitute an overlap?
-
-			\return
-				Whether the AABB overlaps.
-		 */
-		public bool overlaps(AABB aabb, bool touchIsOverlap)
+		public bool Overlaps(AABB aabb, bool touchIsOverlap)
 		{
-			Debug.Assert(aabb.lowerBound.Count == lowerBound.Count);
+			bool ov = true;
 
-			bool rv = true;
-
-			if (touchIsOverlap)
+			for (int i = 0; i < dim && ov; ++i)
 			{
-				for (int i = 0; i < lowerBound.Count; ++i)
+				if (aabb.ub[i] < lb[i] || aabb.lb[i] > ub[i])
 				{
-					if (aabb.upperBound[i] < lowerBound[i] || aabb.lowerBound[i] > upperBound[i])
-					{
-						rv = false;
-						break;
-					}
+					ov = false;
+				}
+				if (touchIsOverlap && (aabb.ub[i] == lb[i] || aabb.lb[i] == ub[i]))
+				{
+					ov = false;
 				}
 			}
-			else
+			
+			return ov;
+		}
+
+		public List<double> Center()
+		{
+			List<double> center = _.List<double>(dim);
+
+			for (int i = 0; i < dim; i++)
 			{
-				for (int i = 0; i < lowerBound.Count; ++i)
-				{
-					if (aabb.upperBound[i] <= lowerBound[i] || aabb.lowerBound[i] >= upperBound[i])
-					{
-						rv = false;
-						break;
-					}
-				}
+				center[i] = 0.5 * (lb[i] + ub[i]);
 			}
 
-			return rv;
+			return center;
 		}
-
-		//! Compute the centre of the AABB.
-		/*! \returns
-				The position vector of the AABB centre.
-		 */
-		public List<double> computeCentre()
-		{
-			List<double> position = _.List<double>(lowerBound.Count);
-
-			for (int i = 0;i < position.Count;i++)
-			{
-				position[i] = 0.5 * (lowerBound[i] + upperBound[i]);
-			}
-
-			return _.List<double>(position);
-		}
-
-		//! Set the dimensionality of the AABB.
-		/*! \param dimension
-				The dimensionality of the system.
-		 */
-		public void setDimension(int dimension)
-		{
-			Debug.Assert(dimension >= 2);
-
-			lowerBound.Resize(dimension);
-			upperBound.Resize(dimension);
-		}
-
+		
 		public override string ToString()
 		{
-			if (lowerBound.Count != 2)
+			if (dim != 2)
 			{
 				return "AABB";
 			}
 			return ("AABB " + 
-				lowerBound[0].ToString("0.00").PadLeft(8) + " " + 
-				lowerBound[1].ToString("0.00").PadLeft(8) + " | " + 
-				upperBound[0].ToString("0.00").PadLeft(8) + " " + 
-				upperBound[1].ToString("0.00").PadLeft(8));
+				lb[0].ToString("0.00").PadLeft(8) + " " + 
+				lb[1].ToString("0.00").PadLeft(8) + " | " + 
+				ub[0].ToString("0.00").PadLeft(8) + " " + 
+				ub[1].ToString("0.00").PadLeft(8));
 		}
 	}
-
 }
