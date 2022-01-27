@@ -31,7 +31,7 @@ namespace BVH
 			{
 				Node node = stack.Pop();
 
-				if (node == null)
+				if (node is null)
 				{
 					continue;
 				}
@@ -55,7 +55,7 @@ namespace BVH
 		
 		public void Insert(Node leaf)
 		{
-			if (root == null)
+			if (root is null)
 			{
 				root = leaf;
 				root.parent = null;
@@ -85,7 +85,7 @@ namespace BVH
 			Node oldParent = sibling.parent;
 			Node newParent = new Node(leaf.aabb | sibling.aabb, oldParent);
 
-			if (oldParent != null)
+			if (oldParent is not null)
 			{
 				if (oldParent.left == sibling)
 				{
@@ -112,7 +112,7 @@ namespace BVH
 			Update(newParent);
 			
 			node = leaf.parent;
-			while (node != null)
+			while (node is not null)
 			{
 				Balance(node);
 				node = node.parent;
@@ -141,7 +141,7 @@ namespace BVH
 				sibling = parent.left;
 			}
 
-			if (grandParent != null)
+			if (grandParent is not null)
 			{
 				if (grandParent.left == parent)
 				{
@@ -155,7 +155,7 @@ namespace BVH
 				sibling.parent = grandParent;
 
 				Node index = grandParent;
-				while (index != null)
+				while (index is not null)
 				{
 					Balance(index);
 					index = index.parent;
@@ -170,7 +170,7 @@ namespace BVH
 
 		private void Update(Node node)
 		{
-			if (node == null) 
+			if (node is null) 
 			{
 				return;
 			}
@@ -187,24 +187,22 @@ namespace BVH
 
 		private void Swap(Node node1, Node node2)
 		{
-			if (node1 == null || node2 == null) 
+			if (node1 is null || node2 is null) 
 			{
 				return;
 			}
 
 			Node par1 = node1.parent;
 			Node par2 = node2.parent;
-			if (par1 == null || par2 == null)
+			if (par1 is null || par2 is null)
 			{
 				return;
 			}
 
 			node1.parent = par2;
 			node2.parent = par1;
-			if (par1.left == node1) par1.left = node2;
-				else par1.right = node2;
-			if (par2.left == node2) par2.left = node1;
-				else par2.right = node1;
+			(par1.left == node1? ref par1.left: ref par1.right) = node2;
+			(par2.left == node2? ref par2.left: ref par2.right) = node1;
 
 			Update(node1);
 			Update(node2);
@@ -212,100 +210,135 @@ namespace BVH
 
 		private void Balance(Node node)
 		{
-			if (node == null)
+			if (node is null)
 			{
 				return;
 			}
-			
+
 			if (node.height < 2)
 			{
 				Balance(node.parent);
 				return;
 			}
 
-			bool b(Node node1, Node node2)
-			{
-				return Math.Abs(node1.height - node2.height) < 2;
-			}
-
-			Node u(Node node1, Node node2)
-			{
-				return new Node() {height = Math.Max(node1.height, node2.height) + 1};
-			};
+			var isBalanced = (int height1, int height2) => Math.Abs(height1 - height2) < 2;
+			var group = (int height1, int height2) => Math.Max(height1, height2) + 1;
 			
-			// Console.WriteLine("balance()");
-			// 3-nodes
+			// L-RL-RR
 			{
-				Node? nL = node.left;
-				Node? nR = node.right;
-				Node? n1 = nL.left;
-				Node? n2 = nL.right;
-				Node? n3 = nR.left;
-				Node? n4 = nR.right;
+				Node nL = node.left;
+				Node nR = node.right;
+				Node nLL = nL.left;
+				Node nLR = nL.right;
+				Node nRL = nR.left;
+				Node nRR = nR.right;
 
 				var list = new[]
 				{
-					new {index = 0, n0 = nR, n1 = n1, n2 = n2},
-					new {index = 1, n0 = n1, n1 = nR, n2 = n2},
-					new {index = 2, n0 = n2, n1 = nR, n2 = n1},
-					new {index = 0, n0 = nL, n1 = n3, n2 = n4},
-					new {index = 3, n0 = n3, n1 = nL, n2 = n4},
-					new {index = 4, n0 = n4, n1 = nL, n2 = n3},
+					new {index = 0, nL = nR , nRL = nLL, nRR = nLR},
+					new {index = 1, nL = nLL, nRL = nR , nRR = nLR},
+					new {index = 2, nL = nLR, nRL = nR , nRR = nLL},
+					new {index = 0, nL = nL , nRL = nRL, nRR = nRR},
+					new {index = 3, nL = nRL, nRL = nL , nRR = nRR},
+					new {index = 4, nL = nRR, nRL = nL , nRR = nRL},
 				}.ToList()
-					.Where(_ => (_.n0 != null && _.n1 != null && _.n2 != null))
-					.Where(_ => b(_.n1, _.n2) && b(u(_.n1, _.n2), _.n0))
-					.Select(_ => new {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = _.n0.aabb, index = _.index})
+					.Where(_ => (_.nL is not null && _.nRL is not null && _.nRR is not null))
+					.Where(_ => isBalanced(_.nRL.height, _.nRR.height))
+					.Where(_ => isBalanced(group(_.nRL.height, _.nRR.height), _.nL.height))
+					.Select(_ => new {aabb1 = (_.nRL.aabb | _.nRR.aabb), aabb2 = _.nL.aabb, index = _.index})
 					.OrderBy(_ => (_.aabb1 & _.aabb2).Area())
 					// .ThenBy(_ => _.aabb1.Area() + _.aabb2.Area());
 					.ThenBy(_ => Math.Max(_.aabb1.Area(), _.aabb2.Area()));
 					// .ThenBy(_ => Math.Abs(_.aabb1.Area() - _.aabb2.Area()))
 
 				var index = list.Any()? list.First().index: 0;
-				// Console.WriteLine("3 nodes : " + index.ToString());
 				switch (index)
 				{
-					case 1: Swap(nR, n1); break;
-					case 2: Swap(nR, n2); break;
-					case 3: Swap(nL, n3); break;
-					case 4: Swap(nL, n4); break;
+					case 1: Swap(nR, nLL); break;
+					case 2: Swap(nR, nLR); break;
+					case 3: Swap(nL, nRL); break;
+					case 4: Swap(nL, nRR); break;
 					default: break;
 				}
+				// Console.WriteLine("3 nodes : " + index.ToString());
 			}
 
-			// 4-nodes
+			// LL-LR-RL-RR
 			{
 				Node nL = node.left;
 				Node nR = node.right;
-				Node n1 = nL.left;
-				Node n2 = nL.right;
-				Node n3 = nR.left;
-				Node n4 = nR.right;
+				Node nLL = nL.left;
+				Node nLR = nL.right;
+				Node nRL = nR.left;
+				Node nRR = nR.right;
 
 				var list = new[]
 				{
-					new {index = 0, n1 = n1, n2 = n2, n3 = n3, n4 = n4},
-					new {index = 1, n1 = n1, n2 = n3, n3 = n2, n4 = n4},
-					new {index = 2, n1 = n1, n2 = n4, n3 = n3, n4 = n2},
+					new {index = 0, nLL = nLL, nLR = nLR, nRL = nRL, nRR = nRR},
+					new {index = 1, nLL = nLL, nLR = nRL, nRL = nLR, nRR = nRR},
+					new {index = 2, nLL = nLL, nLR = nRR, nRL = nRL, nRR = nLR},
 				}.ToList()
-					.Where(_ => (_.n1 != null && _.n2 != null && _.n3 != null && _.n4 != null))
-					.Where(_ => b(_.n1, _.n2) && b(_.n3, _.n4) && b(u(_.n1, _.n2), u(_.n3, _.n4)))
-					.Select(_ => new {aabb1 = (_.n1.aabb | _.n2.aabb), aabb2 = (_.n3.aabb | _.n4.aabb), index = _.index})
+					.Where(_ => (_.nLL is not null && _.nLR is not null && _.nRL is not null && _.nRR is not null))
+					.Where(_ => isBalanced(_.nLL.height, _.nLR.height))
+					.Where(_ => isBalanced(_.nRL.height, _.nRR.height))
+					.Where(_ => isBalanced(group(_.nLL.height, _.nLR.height), group(_.nRL.height, _.nRR.height)))
+					.Select(_ => new {aabb1 = (_.nLL.aabb | _.nLR.aabb), aabb2 = (_.nRL.aabb | _.nRR.aabb), index = _.index})
 					.OrderBy(_ => (_.aabb1 & _.aabb2).Area())
 					.ThenBy(_ => _.aabb1.Area() + _.aabb2.Area());
 					// .ThenBy(_ => Math.Max(_.aabb1.Area(), _.aabb2.Area()))
 					// .ThenBy(_ => Math.Abs(_.aabb1.Area() - _.aabb2.Area()))
 				
 				var index = list.Any()? list.First().index: 0;
-				// Console.WriteLine("4 nodes : " + index.ToString());
 				switch (index)
 				{
-					case 1: Swap(n2, n3); break;
-					case 2: Swap(n2, n4); break;
+					case 1: Swap(nLR, nRL); break;
+					case 2: Swap(nLR, nRR); break;
 					default: break;
 				}
+				// Console.WriteLine("4 nodes : " + index.ToString());
 			}
 
 			Balance(node.parent);
+		}
+
+		public void Draw(String file, double size, int scale)
+		{
+			int width = Convert.ToInt32(size * scale);
+			int height = Convert.ToInt32(size * scale);
+			Bitmap bitmap = new Bitmap(width, height); //, System.Drawing.Imaging.PixelFormat.Format32bppArgb
+			Graphics g = Graphics.FromImage(bitmap);
+			g.Clear(Color.White);
+			_Draw(root, 0);
+			bitmap.Save(file, System.Drawing.Imaging.ImageFormat.Png);
+			
+			void _Draw(Node node, int depth)
+			{
+				if (node is null) 
+				{
+					return;
+				}
+
+				AABB aabb = node.aabb;
+				int x = Convert.ToInt32(scale * aabb.lb[0]);
+				int y = Convert.ToInt32(scale * aabb.lb[1]);
+				int w = Convert.ToInt32(scale * (aabb.ub[0] - aabb.lb[0]));
+				int h = Convert.ToInt32(scale * (aabb.ub[1] - aabb.lb[1]));
+
+				if (node.isLeaf())
+				{
+					Pen pen = new Pen(Color.Blue, 1);
+					g.DrawEllipse(pen, x, y, w, h);
+				} else {
+					Pen pen = new Pen(Color.Black, 1);
+					g.DrawRectangle(pen, x, y, w, h);
+					// int rgb = Math.Min(255, 128 + depth * 20);
+					// SolidBrush brush = new SolidBrush(Color.FromArgb(rgb, rgb, rgb));
+					//g.FillRectangle(brush, x, y, w, h);
+				}
+
+				_Draw(node.right, depth + 1);
+				_Draw(node.left, depth + 1);
+			}
 		}
 
 		public override string ToString()
@@ -317,57 +350,5 @@ namespace BVH
 			// }
 			return s;
 		}
-
-		void _Draw(Graphics g, Node node, int depth, int scale)
-		{
-			if (node == null) 
-			{
-				return;
-			}
-
-			AABB aabb = node.aabb;
-			bool isLeaf = node.isLeaf();
-			int height = node.height;
-
-			int x = Convert.ToInt32(scale * aabb.lb[0]);
-			int y = Convert.ToInt32(scale * aabb.lb[1]);
-			int w = Convert.ToInt32(scale * (aabb.ub[0] - aabb.lb[0]));
-			int h = Convert.ToInt32(scale * (aabb.ub[1] - aabb.lb[1]));
-
-			Color color = isLeaf? Color.Blue: Color.Black;
-			int penWidth = 1; //isLeaf? 1: Math.Max(1, 5 - depth);
-			Pen pen = new Pen(color, penWidth);
-			int rgb = Math.Min(255, 128 + depth * 20);
-			SolidBrush brush = new SolidBrush(Color.FromArgb(rgb, rgb, rgb));
-
-			if (isLeaf)
-			{
-				// Console.WriteLine(String.Format("{0} {1} {2} {3}", x, y, w, h));
-				g.DrawEllipse(pen, x, y, w, h);
-			} else {
-				// Console.WriteLine("isLeaf false");
-				//g.FillRectangle(brush, x, y, w, h);
-				g.DrawRectangle(pen, x, y, w, h);
-			}
-
-			_Draw(g, node.right, depth + 1, scale);
-			_Draw(g, node.left, depth + 1, scale);
-		}
-
-		public void Draw(String file, double baseLength, int scale)
-		{
-			Bitmap bitmap = new Bitmap(
-				Convert.ToInt32(baseLength*scale), 
-				Convert.ToInt32(baseLength*scale), 
-				System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-			
-			Graphics g = Graphics.FromImage(bitmap);
-			g.Clear(Color.White);
-
-			_Draw(g, root, 0, scale);
-			bitmap.Save(file, System.Drawing.Imaging.ImageFormat.Png);
-		}
-
 	}
-
 }
