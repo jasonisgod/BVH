@@ -13,24 +13,22 @@ namespace BVH
 		private int dim;
 		private double gap;
 		
-		public Tree(int dim_ = 3, double gap_ = 0.05)
+		public Tree(int dim_ = 2, double gap_ = 2)
 		{
+			root = null;
 			dim = dim_;
 			gap = gap_;
-			root = null;
 		}
 
 		public List<Node> Query(AABB aabb, bool touch = false)
 		{
+			List<Node> ans = new List<Node>();
 			Stack<Node> stack = new Stack<Node>();
 			stack.Push(root);
-
-			List<Node> ans = new List<Node>();
 
 			while (stack.Count > 0)
 			{
 				Node node = stack.Pop();
-
 				if (node is null)
 				{
 					continue;
@@ -55,6 +53,11 @@ namespace BVH
 		
 		public void Insert(Node leaf)
 		{
+			if (leaf is null) 
+			{
+				return;
+			}
+
 			if (root is null)
 			{
 				root = leaf;
@@ -68,7 +71,6 @@ namespace BVH
 			{
 				Node left = node.left;
 				Node right = node.right;
-
 				double cost = 2 * node.aabb.Area();
 				double costLeft = (leaf.aabb | left.aabb).Area() - (left.isLeaf()? 0: left.aabb.Area());
 				double costRight = (leaf.aabb | right.aabb).Area() - (right.isLeaf()? 0: right.aabb.Area());
@@ -83,45 +85,31 @@ namespace BVH
 
 			Node sibling = node;
 			Node oldParent = sibling.parent;
-			Node newParent = new Node(leaf.aabb | sibling.aabb, oldParent);
+			Node parent = new Node(leaf.aabb | sibling.aabb, oldParent);
+			parent.left = sibling;
+			parent.right = leaf;
+			sibling.parent = parent;
+			leaf.parent = parent;
 
 			if (oldParent is not null)
 			{
-				if (oldParent.left == sibling)
-				{
-					oldParent.left = newParent;
-				}
-				else
-				{
-					oldParent.right = newParent;
-				}
-
-				newParent.left = sibling;
-				newParent.right = leaf;
-				sibling.parent = newParent;
-				leaf.parent = newParent;
+				(oldParent.left == sibling? ref oldParent.left: ref oldParent.right) = parent;
 			}
 			else
 			{
-				newParent.left = sibling;
-				newParent.right = leaf;
-				sibling.parent = newParent;
-				leaf.parent = newParent;
-				root = newParent;
+				root = parent;
 			}
-			Update(newParent);
-			
-			node = leaf.parent;
-			while (node is not null)
-			{
-				Balance(node);
-				node = node.parent;
-			}
-			
+			Update(parent);
+			Balance(parent);
 		}
 
 		public void Remove(Node leaf)
 		{
+			if (leaf is null)
+			{
+				return;
+			}
+
 			if (leaf == root)
 			{
 				root = null;
@@ -130,42 +118,20 @@ namespace BVH
 
 			Node parent = leaf.parent;
 			Node grandParent = parent.parent;
-			Node sibling;
-
-			if (parent.left == leaf)
-			{
-				sibling = parent.right;
-			}
-			else
-			{
-				sibling = parent.left;
-			}
+			Node sibling = (parent.left == leaf? parent.right: parent.left);
 
 			if (grandParent is not null)
 			{
-				if (grandParent.left == parent)
-				{
-					grandParent.left = sibling;
-				}
-				else
-				{
-					grandParent.right = sibling;
-				}
-
+				(grandParent.left == parent? ref grandParent.left: ref grandParent.right) = sibling;
 				sibling.parent = grandParent;
-
-				Node index = grandParent;
-				while (index is not null)
-				{
-					Balance(index);
-					index = index.parent;
-				}
 			}
 			else
 			{
 				root = sibling;
 				sibling.parent = null;
 			}
+			Update(grandParent);
+			Balance(grandParent);
 		}
 
 		private void Update(Node node)
@@ -180,7 +146,6 @@ namespace BVH
 				Node right = node.right;
 				node.height = 1 + Math.Max(left.height, right.height);
 				node.aabb = (left.aabb | right.aabb);
-				// node.aabb.fatten(gap);
 			}
 			Update(node.parent);
 		}
@@ -224,7 +189,7 @@ namespace BVH
 			var isBalanced = (int height1, int height2) => Math.Abs(height1 - height2) < 2;
 			var group = (int height1, int height2) => Math.Max(height1, height2) + 1;
 			
-			// L-RL-RR
+			// L-RL-RR & R-LL-LR
 			{
 				Node nL = node.left;
 				Node nR = node.right;
