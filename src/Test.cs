@@ -76,7 +76,7 @@ namespace aabb
 			}
 			// Console.Write("Tree generated!\n");
 
-			treeSmall.Draw(@"test.png", baseLength, 1);
+			treeSmall.Draw(@"img/test.png", baseLength, 1);
 			//Console.WriteLine(treeSmall);
 		}
 
