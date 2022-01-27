@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 
-namespace aabb
+namespace BVH
 {
 	/*! \brief A node of the AABB tree.
 

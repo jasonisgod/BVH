@@ -5,7 +5,7 @@ using System.Drawing;
 //using System.Drawing.Common;
 using System.Linq;
 
-namespace aabb
+namespace BVH
 {
 	public class Tree
 	{

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 
-namespace aabb
+namespace BVH
 {
 	public class Test
 	{
@@ -49,7 +49,7 @@ namespace aabb
 			Random random = new Random(seed);
 
 			// Initialise the AABB trees.
-			aabb.Tree treeSmall = new aabb.Tree(2, maxDisp, periodicity, boxSize, nSmall);
+			BVH.Tree treeSmall = new BVH.Tree(2, maxDisp, periodicity, boxSize, nSmall);
 
 			// Initialise particle position vectors.
 			List<List<double>> positionsSmall = _.List<List<double>>(nSmall, _.List<double>(boxSize.Count));
