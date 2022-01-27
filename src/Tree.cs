@@ -266,46 +266,6 @@ namespace BVH
 			Balance(node.parent);
 		}
 
-		public void Draw(String file, double size, int scale)
-		{
-			int width = Convert.ToInt32(size * scale);
-			int height = Convert.ToInt32(size * scale);
-			Bitmap bitmap = new Bitmap(width, height); //, System.Drawing.Imaging.PixelFormat.Format32bppArgb
-			Graphics g = Graphics.FromImage(bitmap);
-			g.Clear(Color.White);
-			_Draw(root, 0);
-			bitmap.Save(file, System.Drawing.Imaging.ImageFormat.Png);
-			
-			void _Draw(Node node, int depth)
-			{
-				if (node is null) 
-				{
-					return;
-				}
-
-				AABB aabb = node.aabb;
-				int x = Convert.ToInt32(scale * aabb.lb[0]);
-				int y = Convert.ToInt32(scale * aabb.lb[1]);
-				int w = Convert.ToInt32(scale * (aabb.ub[0] - aabb.lb[0]));
-				int h = Convert.ToInt32(scale * (aabb.ub[1] - aabb.lb[1]));
-
-				if (node.isLeaf())
-				{
-					Pen pen = new Pen(Color.Blue, 1);
-					g.DrawEllipse(pen, x, y, w, h);
-				} else {
-					Pen pen = new Pen(Color.Black, 1);
-					g.DrawRectangle(pen, x, y, w, h);
-					// int rgb = Math.Min(255, 128 + depth * 20);
-					// SolidBrush brush = new SolidBrush(Color.FromArgb(rgb, rgb, rgb));
-					//g.FillRectangle(brush, x, y, w, h);
-				}
-
-				_Draw(node.right, depth + 1);
-				_Draw(node.left, depth + 1);
-			}
-		}
-
 		public override string ToString()
 		{
 			string s = "";
