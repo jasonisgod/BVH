@@ -10,23 +10,21 @@ namespace BVH
 	{
 		public AABB aabb;
 		public Node parent;
-		// public Node? next;
 		public Node left;
 		public Node right;
 		public int height;
 		
-		public Node() {}
 		public Node(AABB aabb_, Node parent_)
 		{
 			aabb = aabb_;
 			parent = parent_;
 			left = null;
 			right = null;
-			height = parent_ == null? 0: parent_.height + 1;
+			height = parent_ is null? 0: parent_.height + 1;
 		}
 		public bool isLeaf()
 		{
-			return (left == null);
+			return (left is null && right is null);
 		}
 	}
 

@@ -8,7 +8,7 @@ namespace BVH
 {
 	public class AABB
 	{
-		public const double OFFSET = 2;
+		// public const double OFFSET = 2;
 
 		public int dim;
 		public double gap;
@@ -56,16 +56,14 @@ namespace BVH
 			ub = _.List<double>(dim);
 		}
 
-		public void Fatten()
+		private void Fatten()
 		{
-			// AABB aabb = new AABB(dim, gap, lb, ub);
 			for (int i = 0; i < dim; i++)
 			{
 				// double offset = gap * (ub[i] - lb[i]);
-				lb[i] -= OFFSET;
-				ub[i] += OFFSET;
+				lb[i] -= gap;
+				ub[i] += gap;
 			}
-			// return aabb;
 		}
 
 		public double Area()
@@ -91,16 +89,6 @@ namespace BVH
 
 		public static AABB operator| (AABB x, AABB y)
 		{
-			return Union(x, y);
-		}
-
-		public static AABB operator& (AABB x, AABB y)
-		{
-			return Intersect(x, y);
-		}
-
-		public static AABB Union(AABB x, AABB y)
-		{
 			AABB aabb = new AABB(x.dim, x.gap);
 
 			for (int i = 0; i < x.dim; i++)
@@ -113,7 +101,7 @@ namespace BVH
 			return aabb;
 		}
 
-		public static AABB Intersect(AABB x, AABB y)
+		public static AABB operator& (AABB x, AABB y)
 		{
 			AABB aabb = new AABB(x.dim, x.gap);
 

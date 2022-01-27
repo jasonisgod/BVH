@@ -17,7 +17,7 @@ namespace BVH
 			Console.WriteLine("Seed: " + seed.ToString());
 			
 			int dim = 2; // dimension
-			double gap = 0.1; // box gap
+			double gap = 2; // margin gap
 			double radius = 5; // radius of circles
 			double size = 1024; // size of world
 
@@ -28,15 +28,11 @@ namespace BVH
 				List<double> center = _.List<double>(2);
 				center[0] = size * (random.NextDouble() * 0.8 + 0.1);
 				center[1] = size * (random.NextDouble() * 0.8 + 0.1);
-
-				// Console.Write("Insert\n");
 				tree.Insert(new Node(new AABB(2, gap, center, radius), null));
 				//Thread.Sleep(50);
 			}
-			// Console.Write("Tree generated!\n");
 
 			tree.Draw(@"img/test.png", size, 1);
-			//Console.WriteLine(tree);
 		}
 
 	}
