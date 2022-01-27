@@ -19,7 +19,8 @@ namespace BVH
 			gap = gap_;
 			root = null;
 		}
-		public List<Node> Query(AABB aabb, bool touchIsOverlap = false)
+
+		public List<Node> Query(AABB aabb, bool touch = false)
 		{
 			Stack<Node> stack = new Stack<Node>();
 			stack.Push(root);
@@ -35,7 +36,7 @@ namespace BVH
 					continue;
 				}
 
-				if (node.aabb.Overlaps(aabb, touchIsOverlap))
+				if (node.aabb.Overlaps(aabb, touch))
 				{
 					if (node.isLeaf())
 					{
@@ -61,63 +62,26 @@ namespace BVH
 				return;
 			}
 			
-			Node index = root;
+			Node node = root;
 
-			while (!index.isLeaf())
+			while (!node.isLeaf())
 			{
-				Node left = index.left;
-				Node right = index.right;
-				AABB combinedAABB = (index.aabb | leaf.aabb);
+				Node left = node.left;
+				Node right = node.right;
 
-				double surfaceArea = index.aabb.Area();
-				double combinedSurfaceArea = combinedAABB.Area();
-				double cost = 2.0 * combinedSurfaceArea;
-				double inheritanceCost = 2.0 * (combinedSurfaceArea - surfaceArea);
+				double cost = 2 * node.aabb.Area();
+				double costLeft = (leaf.aabb | left.aabb).Area() - (left.isLeaf()? 0: left.aabb.Area());
+				double costRight = (leaf.aabb | right.aabb).Area() - (right.isLeaf()? 0: right.aabb.Area());
 
-				double costLeft;
-				if (left.isLeaf())
-				{
-					AABB aabb = (leaf.aabb | left.aabb);
-					costLeft = aabb.Area() + inheritanceCost;
-				}
-				else
-				{
-					AABB aabb = (leaf.aabb | left.aabb);
-					double oldArea = left.aabb.Area();
-					double newArea = aabb.Area();
-					costLeft = (newArea - oldArea) + inheritanceCost;
-				}
-
-				double costRight;
-				if (right.isLeaf())
-				{
-					AABB aabb = (leaf.aabb | right.aabb);
-					costRight = aabb.Area() + inheritanceCost;
-				}
-				else
-				{
-					AABB aabb = (leaf.aabb | right.aabb);
-					double oldArea = right.aabb.Area();
-					double newArea = aabb.Area();
-					costRight = (newArea - oldArea) + inheritanceCost;
-				}
-
-				if ((cost < costLeft) && (cost < costRight))
+				if (cost < costLeft && cost < costRight)
 				{
 					break;
 				}
 
-				if (costLeft < costRight)
-				{
-					index = left;
-				}
-				else
-				{
-					index = right;
-				}
+				node = (costLeft < costRight? left: right);
 			}
 
-			Node sibling = index;
+			Node sibling = node;
 			Node oldParent = sibling.parent;
 			Node newParent = new Node(leaf.aabb | sibling.aabb, oldParent);
 
@@ -147,12 +111,11 @@ namespace BVH
 			}
 			Update(newParent);
 			
-			// Walk back up the tree fixing heights and AABBs.
-			index = leaf.parent;
-			while (index != null)
+			node = leaf.parent;
+			while (node != null)
 			{
-				Balance(index);
-				index = index.parent;
+				Balance(node);
+				node = node.parent;
 			}
 			
 		}
@@ -253,8 +216,10 @@ namespace BVH
 			{
 				return;
 			}
+			
 			if (node.height < 2)
 			{
+				Balance(node.parent);
 				return;
 			}
 
@@ -339,6 +304,8 @@ namespace BVH
 					default: break;
 				}
 			}
+
+			Balance(node.parent);
 		}
 
 		public override string ToString()

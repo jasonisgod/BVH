@@ -148,7 +148,7 @@ namespace BVH
 			return true;
 		}
 
-		public bool Overlaps(AABB aabb, bool touchIsOverlap)
+		public bool Overlaps(AABB aabb, bool touch)
 		{
 			bool ov = true;
 
@@ -158,7 +158,7 @@ namespace BVH
 				{
 					ov = false;
 				}
-				if (touchIsOverlap && (aabb.ub[i] == lb[i] || aabb.lb[i] == ub[i]))
+				if (touch && (aabb.ub[i] == lb[i] || aabb.lb[i] == ub[i]))
 				{
 					ov = false;
 				}
