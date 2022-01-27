@@ -40,7 +40,6 @@ inhomogeneous.
     L              R
 LL     LR      RL      RR
 ```
-
 - L-RL-RR
 	- Swap(L, RL)
 	- Swap(L, RR)
@@ -51,11 +50,3 @@ LL     LR      RL      RR
 	- Swap(LL, RL)
 	- Swap(LL, RR)
 
-## TODO
-- node-aabb-polygon
-    - edit insertLeaf(): find nearest as sibling
-    - create aabb by polygon
-- closest point search
-    - dolfin BoundingBoxTree
-- unity GUI
-    - insert/find/update/remove
