@@ -3,11 +3,15 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>8632</NoWarn>
+    <!--
+    <NoWarn>8602,8618,8625</NoWarn>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <NullableReferenceTypes>true</NullableReferenceTypes>
+    -->
   </PropertyGroup>
 
   <ItemGroup>
