@@ -2,11 +2,6 @@
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/jasonisgod/BVH) 
 ![GitHub commit checks state](https://img.shields.io/github/checks-status/jasonisgod/BVH/master) 
-
-![CRAN/METACRAN](https://img.shields.io/cran/l/devtools) 
-![NodePing uptime](https://img.shields.io/nodeping/uptime/jkiwn052-ntpp-4lbb-8d45-ihew6d9ucoei)
-
-![PingPong status](https://img.shields.io/pingpong/status/sp_2e80bc00b6054faeb2b87e2464be337e) 
 ![GitHub](https://img.shields.io/github/license/jasonisgod/BVH) 
 
 ## About
@@ -26,33 +21,41 @@ inhomogeneous.
 ![Alt text](README.png?raw=true "Title")
 
 ## Optimization
+
+
+### Priority (high to low)
+- Tree Balance
+	- Minimize the difference height (at most 1) between left and right for every nodes
+- Intersect area
+	- Minimize the intersect area of left and right for every nodes
+- Union area
+	- Minimize the union area of left and right for every nodes
+- Difference of area
+	- Minimize the difference of area between left and right for every nodes
+
+### Operation
+
 ```
-			0
-	L				R
-1		2		3		4
+           0
+    L              R
+LL     LR      RL      RR
 ```
 
-Priority
-1. Tree Balance
-2. Min(Overlap area)
-3. Min(Total area)
-4. Min(Diff of pairs)
-
-Options
-- Swap(L, 3)
-- Swap(L, 4)
-- Swap(R, 1)
-- Swap(R, 2)
-- Swap(1, 3)
-- Swap(1, 4)
+- L-RL-RR
+	- Swap(L, RL)
+	- Swap(L, RR)
+- R-LL-LR
+	- Swap(R, LL)
+	- Swap(R, LR)
+- LL-LR-RL-RR
+	- Swap(LL, RL)
+	- Swap(LL, RR)
 
 ## TODO
 - node-aabb-polygon
-	- capitalize method name
-	- edit insertLeaf(): find nearest as sibling
-	- object <-> nodes pointer mapping
-	- create aabb by polygon
+    - edit insertLeaf(): find nearest as sibling
+    - create aabb by polygon
 - closest point search
-	- dolfin BoundingBoxTree
+    - dolfin BoundingBoxTree
 - unity GUI
-	- insert/find/update/remove
+    - insert/find/update/remove
