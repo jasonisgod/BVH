@@ -10,74 +10,35 @@ namespace BVH
 	{
 		public static void Main(string[] args)
 		{
-			/*****************************************************************/
-			/*	  Set parameters, initialise variables and objects.		*/
-			/*****************************************************************/
+			int n = args.Length > 0? Convert.ToInt32(args[0]): 100; // number of circles
+			int seed = args.Length > 1? Convert.ToInt32(args[1]): System.DateTime.Now.GetHashCode(); // random seed
 
-			int nSweeps = 100000; // The number of Monte Carlo sweeps.
-			int sampleInterval = 100; // The number of sweeps per sample.
-			int nSmall = args.Length > 0? Convert.ToInt32(args[0]): 100; // The number of small particles.
-			int nLarge = 0; // The number of large particles.
-			double diameterSmall = 1; // The diameter of the small particles.
-			double diameterLarge = 50; // The diameter of the large particles.
-			//double density = 0.1; // The system density.
-			double maxDisp = 0.1; // Maximum trial displacement (in units of diameter).
-
-			// Total particles.
-			int nParticles = nSmall + nLarge;
-
-			// Number of samples.
-			int nSamples = nSweeps / sampleInterval;
-
-			// Particle radii.
-			double radiusSmall = 0.5 * diameterSmall;
-			double radiusLarge = 0.5 * diameterLarge;
-
-			// Output formatting flag.
-			int format = Convert.ToInt32(Math.Floor(Math.Log10(nSamples)));
-
-			// Set the periodicity of the simulation box.
+			Random random = new Random(seed);
+			Console.WriteLine("Seed: " + seed.ToString());
+			
+			double maxDisp = 0.1; // box gap
+			double radius = 0.5; // radius of circles
+			double baseLength = 1024; // max box
 			List<bool> periodicity = new List<bool>() {false, false};
-
-			// Work out base length of simulation box.
-			double baseLength = 1024; //Math.Pow((Math.PI * (nSmall * diameterSmall + nLarge * diameterLarge)) / (4.0 * density), 1.0 / 2.0);
 			List<double> boxSize = new List<double>() {baseLength, baseLength};
 
-			// Initialise the random number generator.
-			int seed = args.Length > 1? Convert.ToInt32(args[1]): System.DateTime.Now.GetHashCode();
-			Console.WriteLine("Seed: " + seed.ToString());
-			Random random = new Random(seed);
+			BVH.Tree tree = new BVH.Tree(2, maxDisp, periodicity, boxSize, n);
 
-			// Initialise the AABB trees.
-			BVH.Tree treeSmall = new BVH.Tree(2, maxDisp, periodicity, boxSize, nSmall);
-
-			// Initialise particle position vectors.
-			List<List<double>> positionsSmall = _.List<List<double>>(nSmall, _.List<double>(boxSize.Count));
-
-			/*****************************************************************/
-			/*			 Generate the initial AABB trees.				  */
-			/*****************************************************************/
-
-			// Console.Write("Inserting small particles into AABB tree ...\n");
-			for (int i = 0;i < nSmall;i++)
+			for (int i = 0; i < n; i++)
 			{
-				// Initialise the particle position vector.
 				List<double> position = _.List<double>(2);
 				position[0] = boxSize[0] * (random.NextDouble() * 0.8 + 0.1);
 				position[1] = boxSize[1] * (random.NextDouble() * 0.8 + 0.1);
 
 				// Insert particle into tree.
 				// Console.Write("Insert\n");
-				treeSmall.insertParticle(i, position, radiusSmall * (1 + 5 * random.NextDouble()));
+				tree.insertParticle(i, position, radius * (1 + 5 * random.NextDouble()));
 				//Thread.Sleep(50);
-
-				// Store the position.
-				positionsSmall[i] = _.List<double>(position);
 			}
 			// Console.Write("Tree generated!\n");
 
-			treeSmall.Draw(@"img/test.png", baseLength, 1);
-			//Console.WriteLine(treeSmall);
+			tree.Draw(@"img/test.png", baseLength, 1);
+			//Console.WriteLine(tree);
 		}
 
 	}
